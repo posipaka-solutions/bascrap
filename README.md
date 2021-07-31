@@ -1,0 +1,2 @@
+# bascrap
+Binance Announcement Scrap
