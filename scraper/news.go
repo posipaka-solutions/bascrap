@@ -2,9 +2,8 @@ package scraper
 
 import "github.com/posipaka-trade/bascrap/scraper/announcement"
 
-const binanceUrl = "https://www.binance.com/"
+const binanceUrl = "https://www.binance.com"
 const (
-	//mainBinanceDiv  = ".css-vurnku"
 	announcementDiv = ".css-6f91y1"
 	newsListDiv     = ".css-vurnku"
 )

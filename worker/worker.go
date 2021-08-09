@@ -43,7 +43,7 @@ func checkCryptoNews(handler scraper.ScrapHandler) string {
 	headerWords := strings.Fields(news.Header)
 	for _, word := range headerWords {
 		if strings.HasPrefix(word, "(") && strings.HasSuffix(word, ")") {
-			cryptoList = append(cryptoList, fmt.Sprint(word[1:len(word)-2], "/", usdt))
+			cryptoList = append(cryptoList, fmt.Sprint(word[1:len(word)-1], "/", usdt))
 			cmn.LogInfo.Print("New crypto ", cryptoList[len(cryptoList)-1])
 		}
 	}
@@ -73,9 +73,9 @@ func checkFiatNews(handler scraper.ScrapHandler) string {
 	for _, word := range headerWords {
 		if strings.Contains(word, "/") {
 			if strings.HasSuffix(word, ",") {
-				fiatList = append(fiatList, word[:len(word)-2])
-			} else {
 				fiatList = append(fiatList, word[:len(word)-1])
+			} else {
+				fiatList = append(fiatList, word[:len(word)])
 			}
 			cmn.LogInfo.Print("New fiat ", fiatList[len(fiatList)-1])
 		}
