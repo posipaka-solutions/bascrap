@@ -5,13 +5,29 @@ import (
 	"github.com/posipaka-trade/bascrap/scraper"
 	"github.com/posipaka-trade/bascrap/scraper/announcement"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
+	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
+	"net/http"
 	"strings"
 	"time"
 )
 
 const usdt = "USDT"
 
-func StartMonitoring() {
+type Worker struct {
+	gateioConn, binanceConn exchangeapi.ApiConnector
+
+	client *http.Client
+}
+
+func New(binanceConn, gateioConn exchangeapi.ApiConnector) *Worker {
+	return &Worker{
+		gateioConn:  gateioConn,
+		binanceConn: binanceConn,
+		client:      &http.Client{},
+	}
+}
+
+func (worker *Worker) StartMonitoring() {
 	cryptoListingHandler := scraper.New(announcement.NewCryptoListing)
 	fiatListingHandler := scraper.New(announcement.NewFiatListing)
 

@@ -2,6 +2,10 @@ github.com/PuerkitoBio/goquery v1.7.1 h1:oE+T06D+1T7LNrn91B4aERsRIeCLJ/oPSa6xB9F
 github.com/PuerkitoBio/goquery v1.7.1/go.mod h1:XY0pP4kfraEmmV1O7Uf6XyjoslwsneBbgeDjLYuN8xY=
 github.com/andybalholm/cascadia v1.2.0 h1:vuRCkM5Ozh/BfmsaTm26kbjm0mIOM3yS5Ek/F5h18aE=
 github.com/andybalholm/cascadia v1.2.0/go.mod h1:YCyR8vOZT9aZ1CHEd8ap0gMVm2aFgxBp0T0eFw1RUQY=
+github.com/pelletier/go-toml v1.9.3 h1:zeC5b1GviRUyKYd6OJPvBU/mcVDVoL1OhT17FCt5dSQ=
+github.com/pelletier/go-toml v1.9.3/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
+github.com/posipaka-trade/binance-api-go v0.0.0-20210729131201-705548a78660 h1:hmQI5EDliWvGFVwEIv4K1eqNZTmcrmxJxBgsZ/qPvG0=
+github.com/posipaka-trade/binance-api-go v0.0.0-20210729131201-705548a78660/go.mod h1:o09C9TFzmdH1dEVcDmCnIronx0oj0Uzenj2d9NLudis=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210729124010-e93042208c77 h1:Ft6QxRndv8GljfjHP1VE6E9VOVIpI7jN8S1Xe8uCAak=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210729124010-e93042208c77/go.mod h1:MtyBzOkj2aI7S3EX+8RGGYDDxtrtyFPETA6uOqwZFFM=
 golang.org/x/net v0.0.0-20180218175443-cbe0f9307d01/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
