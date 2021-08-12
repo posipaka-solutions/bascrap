@@ -21,11 +21,12 @@ type Worker struct {
 	client          *http.Client
 }
 
-func New(binanceConn, gateioConn exchangeapi.ApiConnector) *Worker {
+func New(binanceConn, gateioConn exchangeapi.ApiConnector, quantity float64) *Worker {
 	return &Worker{
-		gateioConn:  gateioConn,
-		binanceConn: binanceConn,
-		client:      &http.Client{},
+		quantityToSpend: quantity,
+		gateioConn:      gateioConn,
+		binanceConn:     binanceConn,
+		client:          &http.Client{},
 	}
 }
 
@@ -34,6 +35,7 @@ func (worker *Worker) StartMonitoring() {
 	cryptoListingHandler := scraper.New(announcement.NewCryptoListing)
 	fiatListingHandler := scraper.New(announcement.NewFiatListing)
 
+	cmn.LogInfo.Print("Monitoring started.")
 	for worker.isWorking {
 		if !(time.Now().Hour() >= 3 && time.Now().Hour() <= 13) {
 			time.Sleep(1 * time.Minute)
@@ -51,6 +53,7 @@ func (worker *Worker) StartMonitoring() {
 
 		time.Sleep(1 * time.Second)
 	}
+	cmn.LogInfo.Print("Monitoring finished.")
 }
 
 func checkCryptoNews(handler scraper.ScrapHandler) (symbol.Assets, bool) {
@@ -124,7 +127,7 @@ func splitSymbols(symbolsList []string, delimiter string) []symbol.Assets {
 		}
 
 		symbolsAssetsList = append(symbolsAssetsList, symbol.Assets{
-			Base:  symb[:idx-1],
+			Base:  symb[:idx],
 			Quote: symb[idx+1:],
 		})
 	}

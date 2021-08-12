@@ -28,13 +28,13 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 		cmn.LogError.Print(err.Error())
 		return false
 	}
-	cmn.LogInfo.Printf(newSymbol.Base, newSymbol.Quote, " -> ", price)
+	cmn.LogInfo.Print(newSymbol.Base, newSymbol.Quote, " -> ", price)
 
 	parameters := order.Parameters{
 		Assets:   newSymbol,
 		Side:     order.Buy,
-		Type:     order.Market,
-		Quantity: worker.quantityToSpend * (price * 1.05), // pod voprosom
+		Type:     order.Limit,
+		Quantity: worker.quantityToSpend / (price * 1.05),
 		Price:    price * 1.05,
 	}
 	cmn.LogInfo.Printf("Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
@@ -79,7 +79,7 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 
 		buyFiat = symbol.Assets{
 			Base:  newFiat.Base,
-			Quote: newFiat.Quote,
+			Quote: quote,
 		}
 		limits, err := worker.binanceConn.GetSymbolLimits(buyFiat)
 		if err != nil {
