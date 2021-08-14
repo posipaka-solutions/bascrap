@@ -1,9 +1,9 @@
-quantityToSpend = 0.0
+initial_funds = 12.0 # in usdt
 
 [binance_api_cred]
 key = ""
 secret = ""
 
-[gateio_api_cred]
+[gate_api_cred]
 key = ""
 secret = ""

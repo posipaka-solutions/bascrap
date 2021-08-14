@@ -40,6 +40,7 @@ func (worker *Worker) StartMonitoring() {
 		if !(time.Now().Hour() >= 3 && time.Now().Hour() <= 13) {
 			time.Sleep(1 * time.Minute)
 		}
+
 		newCrypto, isOkay := checkCryptoNews(cryptoListingHandler)
 		if isOkay {
 			worker.buyNewCrypto(newCrypto)

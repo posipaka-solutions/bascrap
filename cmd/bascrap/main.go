@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"github.com/pelletier/go-toml"
 	"github.com/posipaka-trade/bascrap/worker"
 	"github.com/posipaka-trade/binance-api-go/pkg/binance"
@@ -11,59 +12,68 @@ import (
 
 const (
 	binanceEx = "binance"
-	gateioEx  = "gateio"
+	gateioEx  = "gate"
 )
 
 const configPath = "./configs/bascrap.toml"
 
 func main() {
 	cmn.InitLoggers("bascrap")
+	cmn.LogInfo.Print("Bascrap execution started.")
 
-	binanceApiKey, isOkay := parseApiCred(binanceEx)
-	if !isOkay {
-		return
-	}
-
-	gateioApiKey, isOkay := parseApiCred(gateioEx)
-	if !isOkay {
-		return
-	}
-
-	tml, err := toml.LoadFile(configPath)
+	binanceApiKey, err := parseApiCred(configPath, binanceEx)
 	if err != nil {
-		panic("[cfg] Config parsing error " + err.Error())
+		panic(err.Error())
 	}
 
-	quantity := tml.Get("quantityToSpend")
-	if quantity == nil {
-		panic("[cfg] quantityToSpend not specified")
+	gateioApiKey, err := parseApiCred(configPath, gateioEx)
+	if err != nil {
+		panic(err.Error())
 	}
 
-	w := worker.New(binance.New(binanceApiKey), gate.New(gateioApiKey), quantity.(float64))
+	initialFunds, err := parseInitialFunds(configPath)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	w := worker.New(binance.New(binanceApiKey), gate.New(gateioApiKey), initialFunds)
 	w.StartMonitoring()
+	cmn.LogInfo.Print("Bascrap execution finished.")
 }
 
-func parseApiCred(exchange string) (exchangeapi.ApiKey, bool) {
-	tml, err := toml.LoadFile(configPath)
+func parseApiCred(cfgPath, exchange string) (exchangeapi.ApiKey, error) {
+	tml, err := toml.LoadFile(cfgPath)
 	if err != nil {
-		cmn.LogError.Printf("[cfg] Config parsing error %s", err.Error())
-		return exchangeapi.ApiKey{}, false
+		return exchangeapi.ApiKey{}, errors.New("[cfg] Config file (" + cfgPath + ") loading error " + err.Error())
 	}
 
 	apiKey := tml.Get(exchange + "_api_cred.key")
 	if apiKey == nil {
-		cmn.LogError.Print("[cfg] ", exchange, " key not specified.")
-		return exchangeapi.ApiKey{}, false
+		cmn.LogError.Print("[cfg] Api key for ", exchange, " exchange was not recognized.")
+		return exchangeapi.ApiKey{}, errors.New("[cfg] Api key for " + exchange + " exchanged was not recognized")
 	}
 
 	apiSecret := tml.Get(exchange + "_api_cred.secret")
 	if apiSecret == nil {
-		cmn.LogError.Print("[cfg] ", exchange, " secret not specified.")
-		return exchangeapi.ApiKey{}, false
+		return exchangeapi.ApiKey{}, errors.New("[cfg] Api secret for " + exchange + " exchanged was not recognized")
 	}
 
 	return exchangeapi.ApiKey{
 		Key:    apiKey.(string),
 		Secret: apiSecret.(string),
-	}, true
+	}, nil
+}
+
+func parseInitialFunds(cfgPath string) (float64, error) {
+	tml, err := toml.LoadFile(cfgPath)
+	if err != nil {
+		return 0, errors.New("[cfg] Config file (" + cfgPath + ") loading error " + err.Error())
+	}
+
+	initialFunds := tml.Get("initial_funds")
+	if initialFunds == nil {
+		return 0, errors.New("[cfg] Initial funds(`initial_funds`) not specified")
+	}
+
+	return initialFunds.(float64), nil
 }

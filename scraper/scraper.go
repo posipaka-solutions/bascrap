@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/posipaka-trade/bascrap/scraper/announcement"
-	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"net/http"
 )
 
@@ -21,7 +20,6 @@ type ScrapHandler struct {
 }
 
 func New(announceType announcement.Type) ScrapHandler {
-	defer cmn.LogInfo.Print("scraper -> New Scraper instance created.")
 	handler := ScrapHandler{
 		announceForMonitoring: announceType,
 	}
