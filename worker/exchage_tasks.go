@@ -94,13 +94,21 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 		break
 	}
 
+	//buyFiatFunds
+	_, err := worker.binanceConn.GetAssetBalance(buyFiat.Quote)
+	if err != nil {
+		cmn.LogError.Print("Failed to transfer fiat balance.")
+		return false
+	}
+	// add funds conversions
+
 	parameters := order.Parameters{
 		Assets:   buyFiat,
 		Side:     order.Buy,
 		Type:     order.Market,
-		Quantity: worker.quantityToSpend,
+		Quantity: worker.quantityToSpend, // todo change quantity depending on it fiat
 	}
-	_, err := worker.binanceConn.SetOrder(parameters)
+	_, err = worker.binanceConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
 		cmn.LogError.Print("Failed to set order on binance.")
