@@ -4,8 +4,8 @@ github.com/andybalholm/cascadia v1.2.0 h1:vuRCkM5Ozh/BfmsaTm26kbjm0mIOM3yS5Ek/F5
 github.com/andybalholm/cascadia v1.2.0/go.mod h1:YCyR8vOZT9aZ1CHEd8ap0gMVm2aFgxBp0T0eFw1RUQY=
 github.com/pelletier/go-toml v1.9.3 h1:zeC5b1GviRUyKYd6OJPvBU/mcVDVoL1OhT17FCt5dSQ=
 github.com/pelletier/go-toml v1.9.3/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
-github.com/posipaka-trade/binance-api-go v0.0.0-20210814144645-a166ce1ccee8 h1:Nwl3wT8HtV1v8+wgHnpwMLWIHSeQuIsrAuhUOC4CFyw=
-github.com/posipaka-trade/binance-api-go v0.0.0-20210814144645-a166ce1ccee8/go.mod h1:iJOBWsVXBTN0RlJJAp8YKC5vfJ/Hyzlc5dxTfmjFN7M=
+github.com/posipaka-trade/binance-api-go v0.0.0-20210815204910-0346228a26dd h1:BOFwaEjSW+VhuBfNvSnpT1Bvo8nSlHuGmqS5iUsmeDM=
+github.com/posipaka-trade/binance-api-go v0.0.0-20210815204910-0346228a26dd/go.mod h1:iJOBWsVXBTN0RlJJAp8YKC5vfJ/Hyzlc5dxTfmjFN7M=
 github.com/posipaka-trade/gate-api-go v0.0.0-20210814144953-730e1310294d h1:wFx7Dl3ofnkN8lJUi2OdgxyNmLqSiMXLkAHKeIsvIr0=
 github.com/posipaka-trade/gate-api-go v0.0.0-20210814144953-730e1310294d/go.mod h1:x5k6xceuYIWBYwGsF20+4YGcknwscnwskcwwnh3Bg0Q=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210814143648-68a5e6ae3b95 h1:fVg041omfXbCtuF0GPE5r+6XbmGonVv3wKjTLfeSqHg=

@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-const usdt = "USDT"
-
 type Worker struct {
 	gateioConn, binanceConn exchangeapi.ApiConnector
 
@@ -37,9 +35,9 @@ func (worker *Worker) StartMonitoring() {
 
 	cmn.LogInfo.Print("Monitoring started.")
 	for worker.isWorking {
-		if !(time.Now().Hour() >= 3 && time.Now().Hour() <= 13) {
-			time.Sleep(1 * time.Minute)
-		}
+		//if !(time.Now().Hour() >= 3 && time.Now().Hour() <= 13) {
+		//	time.Sleep(1 * time.Minute)
+		//}
 
 		newCrypto, isOkay := checkCryptoNews(cryptoListingHandler)
 		if isOkay {

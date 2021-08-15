@@ -6,13 +6,22 @@ import (
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
 )
 
+const (
+	usdt = "USDT"
+	busd = "BUSD"
+	eur  = "EUR"
+	aud  = "AUD"
+	gpb  = "GPB"
+	rub  = "RUB"
+)
+
 var quotesPriority = []string{
-	"USDT",
-	"BUSD",
-	"EUR",
-	"AUD",
-	"GPB",
-	"RUB",
+	usdt,
+	busd,
+	eur,
+	aud,
+	gpb,
+	rub,
 }
 
 func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
@@ -94,19 +103,34 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 		break
 	}
 
-	//buyFiatFunds
-	_, err := worker.binanceConn.GetAssetBalance(buyFiat.Quote)
+	fundsQuantity, err := worker.binanceConn.GetAssetBalance(buyFiat.Quote)
 	if err != nil {
-		cmn.LogError.Print("Failed to transfer fiat balance.")
+		cmn.LogError.Print("Failed to get fiat balance.")
 		return false
 	}
-	// add funds conversions
+
+	newQuantity := 0.0
+	if fundsQuantity < 1 {
+		newQuantity, err = worker.binanceConn.SetOrder(order.Parameters{
+			Assets: symbol.Assets{
+				Base:  buyFiat.Quote,
+				Quote: usdt,
+			},
+			Side:     order.Buy,
+			Type:     order.Market,
+			Quantity: worker.quantityToSpend,
+		})
+		if err != nil {
+			cmn.LogError.Print("Failed to set order for buy .")
+			return false
+		}
+	}
 
 	parameters := order.Parameters{
 		Assets:   buyFiat,
 		Side:     order.Buy,
 		Type:     order.Market,
-		Quantity: worker.quantityToSpend, // todo change quantity depending on it fiat
+		Quantity: newQuantity, // todo change quantity depending on it fiat
 	}
 	_, err = worker.binanceConn.SetOrder(parameters)
 	if err != nil {
