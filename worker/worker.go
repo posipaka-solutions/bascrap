@@ -2,11 +2,10 @@ package worker
 
 import (
 	"github.com/posipaka-trade/bascrap/internal/announcement"
+	"github.com/posipaka-trade/bascrap/internal/announcement/analyzer"
 	"github.com/posipaka-trade/bascrap/internal/scraper"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
-	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
-	"strings"
 	"time"
 )
 
@@ -27,23 +26,49 @@ func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worke
 
 func (worker *Worker) StartMonitoring() {
 	worker.isWorking = true
-	cryptoListingHandler := scraper.New(announcement.NewCryptoListing)
-	fiatListingHandler := scraper.New(announcement.NewFiatListing)
+	go worker.monitorController(announcement.NewCryptoListingUrl)
+	go worker.monitorController(announcement.NewFiatListingUrl)
 
 	cmn.LogInfo.Print("Monitoring started.")
+}
+
+func (worker *Worker) monitorController(monitoringUrl string) {
+	handler := scraper.New(monitoringUrl)
 	for worker.isWorking {
-		newCrypto, isOkay := checkCryptoNews(cryptoListingHandler)
-		if isOkay {
-			worker.buyNewCrypto(newCrypto)
-			worker.isWorking = false
-		}
-		newFiats := checkFiatNews(fiatListingHandler)
-		if newFiats != nil {
-			worker.buyNewFiat(newFiats)
-			worker.isWorking = false
+		time.Sleep(1 * time.Second)
+
+		announcedDetails, err := handler.GetLatestAnnounce()
+		if err != nil {
+			cmn.LogError.Print(err.Error())
+			continue
 		}
 
-		time.Sleep(1 * time.Second)
+		cmn.LogInfo.Print("New announcement on Binance.")
+		processAnnouncement(announcedDetails)
 	}
-	cmn.LogInfo.Print("Monitoring finished.")
+}
+
+func processAnnouncement(announcedDetails announcement.Details) {
+	symbolAssets, announcedType := analyzer.AnnouncementSymbol(announcedDetails)
+	switch announcedType {
+	case announcement.Unknown:
+		cmn.LogWarning.Print("This new announcement is unuseful for Bascrap")
+		break
+	case announcement.NewCrypto:
+		if symbolAssets.IsEmpty() {
+			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
+				announcedDetails.Header)
+		} else {
+			//TODO buy crypto on gate.io
+		}
+		break
+	case announcement.NewTradingPair:
+		if symbolAssets.IsEmpty() {
+			cmn.LogWarning.Print("New trading pair did not get form latest announcement header. -- " +
+				announcedDetails.Header)
+		} else {
+			//TODO run complex procedure for pre-buy of new trading pair base
+		}
+		break
+	}
 }

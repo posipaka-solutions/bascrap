@@ -7,5 +7,5 @@ require (
 	github.com/pelletier/go-toml v1.9.3
 	github.com/posipaka-trade/binance-api-go v0.0.0-20210815204910-0346228a26dd
 	github.com/posipaka-trade/gate-api-go v0.0.0-20210814144953-730e1310294d
-	github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210814143648-68a5e6ae3b95
+	github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210820202355-8150f3867a7a
 )
