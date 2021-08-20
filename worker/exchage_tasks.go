@@ -1,28 +1,11 @@
 package worker
 
 import (
+	"github.com/posipaka-trade/bascrap/internal/assets"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
 )
-
-const (
-	usdt = "USDT"
-	busd = "BUSD"
-	eur  = "EUR"
-	aud  = "AUD"
-	gpb  = "GPB"
-	rub  = "RUB"
-)
-
-var quotesPriority = []string{
-	usdt,
-	busd,
-	eur,
-	aud,
-	gpb,
-	rub,
-}
 
 func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 	limits, err := worker.gateioConn.GetSymbolLimits(newSymbol)
@@ -43,7 +26,7 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 		Assets:   newSymbol,
 		Side:     order.Buy,
 		Type:     order.Limit,
-		Quantity: worker.quantityToSpend / (price * 1.05),
+		Quantity: worker.initialFunds / (price * 1.05),
 		Price:    price * 1.05,
 	}
 	cmn.LogInfo.Printf("Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
@@ -60,7 +43,7 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 	var newFiat symbol.Assets
 	fiatMatched := false
-	for _, quote := range quotesPriority {
+	for _, quote := range assets.Priorities {
 		if fiatMatched == true {
 			break
 		}
@@ -81,7 +64,7 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 	cmn.LogInfo.Print("Selected new fiat symbol ", newFiat.Base, newFiat.Quote)
 
 	var buyFiat symbol.Assets
-	for idx, quote := range quotesPriority {
+	for idx, quote := range assets.Priorities {
 		if quote == newFiat.Quote {
 			continue
 		}
@@ -93,7 +76,7 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 		limits, err := worker.binanceConn.GetSymbolLimits(buyFiat)
 		if err != nil {
 			cmn.LogError.Print(err.Error())
-			if idx == len(quotesPriority)-1 {
+			if idx == len(assets.Priorities)-1 {
 				cmn.LogError.Print("Suitable fiat for prebuy not found.")
 				return false
 			}
@@ -114,11 +97,11 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 		newQuantity, err = worker.binanceConn.SetOrder(order.Parameters{
 			Assets: symbol.Assets{
 				Base:  buyFiat.Quote,
-				Quote: usdt,
+				Quote: assets.Usdt,
 			},
 			Side:     order.Buy,
 			Type:     order.Market,
-			Quantity: worker.quantityToSpend,
+			Quantity: worker.initialFunds,
 		})
 		if err != nil {
 			cmn.LogError.Print("Failed to set order for buy .")

@@ -21,13 +21,13 @@ func closeBody(response *http.Response) {
 }
 
 type ScrapHandler struct {
-	latestAnnounce        announcement.Details
-	announceForMonitoring announcement.Type
+	latestAnnounce announcement.Details
+	monitoringUrl  string
 }
 
-func New(announceType announcement.Type) ScrapHandler {
+func New(link string) ScrapHandler {
 	handler := ScrapHandler{
-		announceForMonitoring: announceType,
+		monitoringUrl: link,
 	}
 
 	var err error
@@ -39,31 +39,33 @@ func New(announceType announcement.Type) ScrapHandler {
 	return handler
 }
 
-func (handler ScrapHandler) GetLatestAnnounce() (announcement.Details, error) {
-	res, err := http.Get(announcement.Links[handler.announceForMonitoring])
+func (handler *ScrapHandler) GetLatestAnnounce() (announcement.Details, error) {
+	resp, err := http.Get(handler.monitoringUrl)
 	if err != nil {
 		return announcement.Details{}, err
 	}
-	defer closeBody(res)
+	defer closeBody(resp)
 
-	if res.StatusCode != 200 {
-		return announcement.Details{}, errors.New(fmt.Sprintf("[scraper] -> Error when get html page. %d: %s", res.StatusCode, res.Status))
+	if resp.StatusCode != 200 {
+		return announcement.Details{},
+			errors.New(fmt.Sprintf("[scraper] -> Error when get html page. %d: %s", resp.StatusCode, resp.Status))
 	}
 
-	newsInfo, err := parseHtml(res, handler.announceForMonitoring)
+	announcedDetails, err := parseHtml(resp)
 	if err != nil {
 		return announcement.Details{}, err
 	}
 
-	if handler.latestAnnounce.Equal(newsInfo) {
+	announcedDetails.SourceUrl = handler.monitoringUrl
+	if handler.latestAnnounce.Equal(announcedDetails) {
 		return announcement.Details{}, &NoNewsUpdate{}
 	}
 
-	handler.latestAnnounce = newsInfo
-	return newsInfo, nil
+	handler.latestAnnounce = announcedDetails
+	return announcedDetails, nil
 }
 
-func parseHtml(response *http.Response, annType announcement.Type) (announcement.Details, error) {
+func parseHtml(response *http.Response) (announcement.Details, error) {
 	doc, err := goquery.NewDocumentFromReader(response.Body)
 	if err != nil {
 		return announcement.Details{}, err
@@ -84,7 +86,6 @@ func parseHtml(response *http.Response, annType announcement.Type) (announcement
 			return
 		}
 
-		announce.Type = annType
 		announce.Header = s.Text()
 		link, exist := s.Attr("href")
 		if exist {
