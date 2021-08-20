@@ -11,3 +11,15 @@ const (
 	NewCryptoListing Type = 1 << iota
 	NewFiatListing        = 1 << iota
 )
+
+type Details struct {
+	Type   Type
+	Header string
+	Link   string
+}
+
+func (details Details) Equal(otherDetails Details) bool {
+	return details.Header == otherDetails.Header &&
+		details.Link == otherDetails.Link &&
+		details.Type == otherDetails.Type
+}

@@ -1,8 +1,8 @@
 package worker
 
 import (
-	"github.com/posipaka-trade/bascrap/scraper"
-	"github.com/posipaka-trade/bascrap/scraper/announcement"
+	"github.com/posipaka-trade/bascrap/internal/announcement"
+	"github.com/posipaka-trade/bascrap/internal/scraper"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
@@ -35,10 +35,6 @@ func (worker *Worker) StartMonitoring() {
 
 	cmn.LogInfo.Print("Monitoring started.")
 	for worker.isWorking {
-		//if !(time.Now().Hour() >= 3 && time.Now().Hour() <= 13) {
-		//	time.Sleep(1 * time.Minute)
-		//}
-
 		newCrypto, isOkay := checkCryptoNews(cryptoListingHandler)
 		if isOkay {
 			worker.buyNewCrypto(newCrypto)
@@ -56,7 +52,7 @@ func (worker *Worker) StartMonitoring() {
 }
 
 func checkCryptoNews(handler scraper.ScrapHandler) (symbol.Assets, bool) {
-	news, err := handler.GetLatestNews()
+	announce, err := handler.GetLatestAnnounce()
 	if err != nil {
 		_, isOkay := err.(*scraper.NoNewsUpdate)
 		if !isOkay {
@@ -65,11 +61,11 @@ func checkCryptoNews(handler scraper.ScrapHandler) (symbol.Assets, bool) {
 		}
 	}
 
-	if !strings.Contains(news.Header, "Binance Will List") {
+	if !strings.Contains(announce.Header, "Binance Will List") {
 		return symbol.Assets{}, false
 	}
 
-	headerWords := strings.Fields(news.Header)
+	headerWords := strings.Fields(announce.Header)
 	for _, word := range headerWords {
 		if strings.HasPrefix(word, "(") && strings.HasSuffix(word, ")") {
 			cmn.LogInfo.Print("New crypto ", word[1:len(word)-1])
@@ -84,7 +80,7 @@ func checkCryptoNews(handler scraper.ScrapHandler) (symbol.Assets, bool) {
 }
 
 func checkFiatNews(handler scraper.ScrapHandler) []symbol.Assets {
-	news, err := handler.GetLatestNews()
+	news, err := handler.GetLatestAnnounce()
 	if err != nil {
 		_, isOkay := err.(*scraper.NoNewsUpdate)
 		if !isOkay {
