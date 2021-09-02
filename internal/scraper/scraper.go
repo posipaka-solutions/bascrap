@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/posipaka-trade/bascrap/internal/announcement"
+	"io"
 	"net/http"
 )
 
@@ -51,7 +52,7 @@ func (handler *ScrapHandler) GetLatestAnnounce() (announcement.Details, error) {
 			errors.New(fmt.Sprintf("[scraper] -> Error when get html page. %d: %s", resp.StatusCode, resp.Status))
 	}
 
-	announcedDetails, err := parseHtml(resp)
+	announcedDetails, err := parseHtml(resp.Body)
 	if err != nil {
 		return announcement.Details{}, err
 	}
@@ -65,8 +66,8 @@ func (handler *ScrapHandler) GetLatestAnnounce() (announcement.Details, error) {
 	return announcedDetails, nil
 }
 
-func parseHtml(response *http.Response) (announcement.Details, error) {
-	doc, err := goquery.NewDocumentFromReader(response.Body)
+func parseHtml(reader io.Reader) (announcement.Details, error) {
+	doc, err := goquery.NewDocumentFromReader(reader)
 	if err != nil {
 		return announcement.Details{}, err
 	}
