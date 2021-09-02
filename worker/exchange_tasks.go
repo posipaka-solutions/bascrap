@@ -22,10 +22,10 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 	}
 	cmn.LogInfo.Print(newSymbol.Base, newSymbol.Quote, " -> ", price)
 
-	return worker.MakeOrder(newSymbol, price)
+	return worker.setCryptoOrder(newSymbol, price)
 }
 
-func (worker *Worker) MakeOrder(newSymbol symbol.Assets, price float64) bool {
+func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) bool {
 	parameters := order.Parameters{
 		Assets:   newSymbol,
 		Side:     order.Buy,
@@ -133,7 +133,6 @@ func (worker *Worker) setTradingPairOrder(buyFiat symbol.Assets, newQuantity flo
 }
 
 func (worker *Worker) setQuantity(buyFiat symbol.Assets) float64 {
-
 	fundsQuantity, err := worker.binanceConn.GetAssetBalance(buyFiat.Quote)
 	if err != nil {
 		cmn.LogError.Print("Failed to get fiat balance.")
