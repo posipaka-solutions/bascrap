@@ -13,6 +13,12 @@ const (
 	NewTradingPair      = 1 << iota
 )
 
+var TypeAlias = map[Type]string{
+	Unknown:        "unknown",
+	NewCrypto:      "newCrypto",
+	NewTradingPair: "newTradingPair",
+}
+
 type Details struct {
 	SourceUrl string
 	Header    string
