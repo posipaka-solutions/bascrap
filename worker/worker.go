@@ -6,14 +6,15 @@ import (
 	"github.com/posipaka-trade/bascrap/internal/scraper"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
+	"sync"
 	"time"
 )
 
 type Worker struct {
 	gateioConn, binanceConn exchangeapi.ApiConnector
 	initialFunds            float64
-
-	isWorking bool
+	Wg                      sync.WaitGroup
+	isWorking               bool
 }
 
 func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worker {
@@ -26,6 +27,7 @@ func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worke
 
 func (worker *Worker) StartMonitoring() {
 	worker.isWorking = true
+	worker.Wg.Add(2)
 	go worker.monitorController(announcement.NewCryptoListingUrl)
 	go worker.monitorController(announcement.NewFiatListingUrl)
 
@@ -33,6 +35,7 @@ func (worker *Worker) StartMonitoring() {
 }
 
 func (worker *Worker) monitorController(monitoringUrl string) {
+	defer worker.Wg.Done()
 	handler := scraper.New(monitoringUrl)
 	for worker.isWorking {
 		time.Sleep(1 * time.Second)

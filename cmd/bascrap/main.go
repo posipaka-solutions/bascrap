@@ -38,6 +38,7 @@ func main() {
 
 	w := worker.New(binance.New(binanceApiKey), gate.New(gateioApiKey), initialFunds)
 	w.StartMonitoring()
+	w.Wg.Wait()
 	cmn.LogInfo.Print("Bascrap execution finished.")
 }
 
