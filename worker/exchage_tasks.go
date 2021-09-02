@@ -22,6 +22,10 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 	}
 	cmn.LogInfo.Print(newSymbol.Base, newSymbol.Quote, " -> ", price)
 
+	return worker.MakeOrder(newSymbol, price)
+}
+
+func (worker *Worker) MakeOrder(newSymbol symbol.Assets, price float64) bool {
 	parameters := order.Parameters{
 		Assets:   newSymbol,
 		Side:     order.Buy,
@@ -30,13 +34,12 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 		Price:    price * 1.05,
 	}
 	cmn.LogInfo.Printf("Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
-	_, err = worker.gateioConn.SetOrder(parameters)
+	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
 		return false
 	}
-
-	cmn.LogInfo.Print("Set order at gateio to buy new crypto")
+	cmn.LogInfo.Print("Order was set at gate.io")
 	return true
 }
 
