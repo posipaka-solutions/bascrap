@@ -38,7 +38,7 @@ func (worker *Worker) monitorController(monitoringUrl string) {
 	defer worker.Wg.Done()
 	handler := scraper.New(monitoringUrl)
 	for worker.isWorking {
-		time.Sleep(1 * time.Second)
+		time.Sleep(5 * time.Second)
 
 		announcedDetails, err := handler.GetLatestAnnounce()
 		if err != nil {
@@ -47,11 +47,11 @@ func (worker *Worker) monitorController(monitoringUrl string) {
 		}
 
 		cmn.LogInfo.Print("New announcement on Binance.")
-		processAnnouncement(announcedDetails)
+		worker.processAnnouncement(announcedDetails)
 	}
 }
 
-func processAnnouncement(announcedDetails announcement.Details) {
+func (worker *Worker) processAnnouncement(announcedDetails announcement.Details) {
 	symbolAssets, announcedType := analyzer.AnnouncementSymbol(announcedDetails)
 	switch announcedType {
 	case announcement.Unknown:
@@ -62,7 +62,7 @@ func processAnnouncement(announcedDetails announcement.Details) {
 			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
-			//TODO buy crypto on gate.io
+			worker.buyNewCrypto(symbolAssets)
 		}
 		break
 	case announcement.NewTradingPair:

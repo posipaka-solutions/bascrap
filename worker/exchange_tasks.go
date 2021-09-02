@@ -22,6 +22,10 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 	}
 	cmn.LogInfo.Print(newSymbol.Base, newSymbol.Quote, " -> ", price)
 
+	return worker.setCryptoOrder(newSymbol, price)
+}
+
+func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) bool {
 	parameters := order.Parameters{
 		Assets:   newSymbol,
 		Side:     order.Buy,
@@ -30,17 +34,38 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
 		Price:    price * 1.05,
 	}
 	cmn.LogInfo.Printf("Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
-	_, err = worker.gateioConn.SetOrder(parameters)
+	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
 		return false
 	}
-
-	cmn.LogInfo.Print("Set order at gateio to buy new crypto")
+	cmn.LogInfo.Print("Order was set at gate.io")
 	return true
 }
 
 func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
+
+	newFiat := newFiatPreparation(symbolsList)
+	if symbol.Assets.IsEmpty(newFiat) {
+		return false
+	}
+
+	cmn.LogInfo.Print("Selected new fiat symbol ", newFiat.Base, newFiat.Quote)
+
+	buyFiat := worker.findingFiat(newFiat)
+	if symbol.Assets.IsEmpty(buyFiat) {
+		return false
+	}
+
+	newQuantity := worker.setQuantity(buyFiat)
+	if newQuantity == 0 {
+		return false
+	}
+
+	return worker.setTradingPairOrder(buyFiat, newQuantity)
+}
+
+func newFiatPreparation(symbolsList []symbol.Assets) symbol.Assets {
 	var newFiat symbol.Assets
 	fiatMatched := false
 	for _, quote := range assets.Priorities {
@@ -59,10 +84,12 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 
 	if !fiatMatched {
 		cmn.LogError.Print("Suitable fiat for future trading not found.")
-		return false
+		return symbol.Assets{}
 	}
-	cmn.LogInfo.Print("Selected new fiat symbol ", newFiat.Base, newFiat.Quote)
+	return newFiat
+}
 
+func (worker *Worker) findingFiat(newFiat symbol.Assets) symbol.Assets {
 	var buyFiat symbol.Assets
 	for idx, quote := range assets.Priorities {
 		if quote == newFiat.Quote {
@@ -78,18 +105,38 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 			cmn.LogError.Print(err.Error())
 			if idx == len(assets.Priorities)-1 {
 				cmn.LogError.Print("Suitable fiat for prebuy not found.")
-				return false
+				return symbol.Assets{}
 			}
 			continue
 		}
 		worker.binanceConn.AddLimits(limits)
 		break
 	}
+	return buyFiat
+}
 
+func (worker *Worker) setTradingPairOrder(buyFiat symbol.Assets, newQuantity float64) bool {
+	parameters := order.Parameters{
+		Assets:   buyFiat,
+		Side:     order.Buy,
+		Type:     order.Market,
+		Quantity: newQuantity, // todo change quantity depending on it fiat
+	}
+	_, err := worker.binanceConn.SetOrder(parameters)
+	if err != nil {
+		cmn.LogError.Print(err.Error())
+		cmn.LogError.Print("Failed to set an order on binance.")
+		return false
+	}
+	cmn.LogInfo.Print("New fiat was bought on binance")
+	return true
+}
+
+func (worker *Worker) setQuantity(buyFiat symbol.Assets) float64 {
 	fundsQuantity, err := worker.binanceConn.GetAssetBalance(buyFiat.Quote)
 	if err != nil {
 		cmn.LogError.Print("Failed to get fiat balance.")
-		return false
+		return 0
 	}
 
 	newQuantity := 0.0
@@ -104,23 +151,9 @@ func (worker *Worker) buyNewFiat(symbolsList []symbol.Assets) bool {
 			Quantity: worker.initialFunds,
 		})
 		if err != nil {
-			cmn.LogError.Print("Failed to set order for buy .")
-			return false
+			cmn.LogError.Print("Failed to set an order for buy .")
+			return 0
 		}
 	}
-
-	parameters := order.Parameters{
-		Assets:   buyFiat,
-		Side:     order.Buy,
-		Type:     order.Market,
-		Quantity: newQuantity, // todo change quantity depending on it fiat
-	}
-	_, err = worker.binanceConn.SetOrder(parameters)
-	if err != nil {
-		cmn.LogError.Print(err.Error())
-		cmn.LogError.Print("Failed to set order on binance.")
-		return false
-	}
-	cmn.LogInfo.Print("New fiat bought on binance")
-	return true
+	return newQuantity
 }
