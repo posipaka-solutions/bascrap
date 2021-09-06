@@ -70,7 +70,7 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New trading pair did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
-			//TODO run complex procedure for pre-buy of new trading pair base
+			worker.buyNewFiat(symbolAssets)
 		}
 		break
 	}

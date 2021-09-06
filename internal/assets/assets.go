@@ -5,15 +5,24 @@ const (
 	Busd = "BUSD"
 	Eur  = "EUR"
 	Aud  = "AUD"
-	Gpb  = "GPB"
 	Rub  = "RUB"
+	Btc  = "BTC"
+	Eth  = "ETH"
+	Bnb  = "BNB"
 )
 
-var Priorities = []string{
+var AnnouncePriority = []string{
 	Usdt,
 	Busd,
 	Eur,
 	Aud,
-	Gpb,
 	Rub,
+}
+
+var BuyPriority = []string{
+	Usdt,
+	Busd,
+	Btc,
+	Eth,
+	Bnb,
 }

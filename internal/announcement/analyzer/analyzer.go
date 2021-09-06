@@ -52,7 +52,7 @@ func newTradingPairSymbol(details announcement.Details) symbol.Assets {
 	}
 
 	pairsAssets := splitSymbols(pairsStrList, "/")
-	for _, asset := range assets.Priorities {
+	for _, asset := range assets.AnnouncePriority {
 		for _, pair := range pairsAssets {
 			if pair.Quote == asset {
 				return pair
