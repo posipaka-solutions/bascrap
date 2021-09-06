@@ -67,6 +67,7 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) bool {
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
 		cmn.LogError.Print(err)
+		return false
 	}
 
 	cmn.LogInfo.Printf("Bascrap bought %f %s", quantity, buyPair.Base)
@@ -101,6 +102,12 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 
 func (worker *Worker) selectBuyPair(newTradingPair symbol.Assets) symbol.Assets {
 	allExchangeSymbols := worker.binanceConn.GetSymbolsList()
+	if allExchangeSymbols == nil ||
+		len(allExchangeSymbols) == 0 {
+		cmn.LogError.Print("Symbols list for exchange is empty.")
+		return symbol.Assets{}
+	}
+
 	suitableArrayIndex := 0
 	for _, symb := range allExchangeSymbols {
 		if symb.Base == newTradingPair.Base {
