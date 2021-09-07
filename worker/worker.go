@@ -48,7 +48,11 @@ func (worker *Worker) monitorController(monitoringUrl string) {
 
 		announcedDetails, err := handler.GetLatestAnnounce()
 		if err != nil {
-			cmn.LogError.Print(err.Error())
+			if _, isOkay := err.(*scraper.NoNewsUpdate); isOkay {
+				cmn.LogWarning.Print(err.Error())
+			} else {
+				cmn.LogError.Print(err.Error())
+			}
 			continue
 		}
 
@@ -73,7 +77,13 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
-			worker.buyNewCrypto(symbolAssets)
+			quantity := worker.buyNewCrypto(symbolAssets)
+			if quantity != 0 {
+				cmn.LogInfo.Printf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
+					symbolAssets.Base, quantity)
+			} else {
+				cmn.LogWarning.Print("New crypto buying failed.")
+			}
 		}
 		break
 	case announcement.NewTradingPair:
@@ -83,7 +93,8 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 		} else {
 			buyPair, quantity := worker.buyNewFiat(symbolAssets)
 			if !buyPair.IsEmpty() && quantity != 0 {
-				cmn.LogInfo.Printf("Bascrap bought %f %s", quantity, buyPair.Base)
+				cmn.LogInfo.Printf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f",
+					buyPair.Base, buyPair.Quote, quantity)
 			} else {
 				cmn.LogWarning.Print("New fiat buy failed.")
 			}
