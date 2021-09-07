@@ -142,4 +142,27 @@ func TestFiatBuy(t *testing.T) {
 			return
 		}
 	})
+
+	t.Run("NoSuitablePairForBuy", func(t *testing.T) {
+		exchange.EXPECT().GetSymbolsList().Return([]symbol.Assets{
+			symbol.Assets{
+				Base:  "KMA",
+				Quote: "LOC",
+			},
+			symbol.Assets{
+				Base:  "BTC",
+				Quote: "EUR",
+			},
+		})
+
+		res := worker.buyNewFiat(symbol.Assets{
+			Base:  "KMA",
+			Quote: "BUSD",
+		})
+
+		if res {
+			t.Error("Bought despite the absent of suitable pair for buy.")
+			return
+		}
+	})
 }
