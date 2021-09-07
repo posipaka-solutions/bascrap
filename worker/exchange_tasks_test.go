@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestFiatBuy(t *testing.T) {
+func TestNewFiatAnnouncementBuy(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
@@ -206,4 +206,28 @@ func TestFiatBuy(t *testing.T) {
 			return
 		}
 	})
+}
+
+func TestNewCryptoBuy(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	price := 69.69
+	initialFunds := 22.8
+	cmn.InitLoggers("")
+	gateMock := mockexchangeapi.NewMockApiConnector(ctrl)
+	gateMock.EXPECT().GetSymbolLimits(gomock.Any()).Return(symbol.Limits{}, nil)
+	gateMock.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
+	gateMock.EXPECT().AddLimits(gomock.Any())
+	gateMock.EXPECT().SetOrder(gomock.Any()).Return(initialFunds/(price*1.05), nil)
+
+	worker := New(nil, gateMock, initialFunds)
+	quantity := worker.buyNewCrypto(symbol.Assets{
+		Base:  "TVK",
+		Quote: "USDT",
+	})
+	if quantity != initialFunds/(price*1.05) {
+		t.Errorf("Incorrect order quantity. Expected: %f. Actual: %f", initialFunds/(price*1.05), quantity)
+		return
+	}
 }

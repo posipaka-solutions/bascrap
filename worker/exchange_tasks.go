@@ -38,13 +38,13 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 	cmn.LogInfo.Printf("Limit order on gate.io: Quantity value - %f, Price value - %f",
 		parameters.Quantity, parameters.Price)
 
-	quantity, err := worker.gateioConn.SetOrder(parameters)
+	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
 		return 0
 	}
 
-	return quantity
+	return worker.initialFunds / (price * 1.05)
 }
 
 // buyNewFiat perform buy of base asset of new fiat pair. Returns symbol and quantity of buy transactions
