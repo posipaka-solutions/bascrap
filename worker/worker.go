@@ -1,139 +1,104 @@
 package worker
 
 import (
-	"github.com/posipaka-trade/bascrap/scraper"
-	"github.com/posipaka-trade/bascrap/scraper/announcement"
+	"github.com/posipaka-trade/bascrap/internal/announcement"
+	"github.com/posipaka-trade/bascrap/internal/announcement/analyzer"
+	"github.com/posipaka-trade/bascrap/internal/scraper"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
-	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
-	"net/http"
-	"strings"
+	"sync"
 	"time"
 )
 
 type Worker struct {
 	gateioConn, binanceConn exchangeapi.ApiConnector
-
-	quantityToSpend float64
-	isWorking       bool
-	client          *http.Client
+	initialFunds            float64
+	Wg                      sync.WaitGroup
+	isWorking               bool
 }
 
-func New(binanceConn, gateioConn exchangeapi.ApiConnector, quantity float64) *Worker {
+func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worker {
 	return &Worker{
-		quantityToSpend: quantity,
-		gateioConn:      gateioConn,
-		binanceConn:     binanceConn,
-		client:          &http.Client{},
+		initialFunds: funds,
+		gateioConn:   gateioConn,
+		binanceConn:  binanceConn,
 	}
 }
 
 func (worker *Worker) StartMonitoring() {
 	worker.isWorking = true
-	cryptoListingHandler := scraper.New(announcement.NewCryptoListing)
-	fiatListingHandler := scraper.New(announcement.NewFiatListing)
+	err := worker.binanceConn.UpdateSymbolsList()
+	if err != nil {
+		cmn.LogInfo.Print("Failed to get symbols list from Binance")
+		return
+	}
+
+	worker.Wg.Add(2)
+	go worker.monitorController(announcement.NewCryptoListingUrl)
+	go worker.monitorController(announcement.NewFiatListingUrl)
 
 	cmn.LogInfo.Print("Monitoring started.")
+}
+
+func (worker *Worker) monitorController(monitoringUrl string) {
+	defer worker.Wg.Done()
+	handler := scraper.New(monitoringUrl)
 	for worker.isWorking {
-		//if !(time.Now().Hour() >= 3 && time.Now().Hour() <= 13) {
-		//	time.Sleep(1 * time.Minute)
-		//}
+		time.Sleep(5 * time.Second)
 
-		newCrypto, isOkay := checkCryptoNews(cryptoListingHandler)
-		if isOkay {
-			worker.buyNewCrypto(newCrypto)
-			worker.isWorking = false
-		}
-		newFiats := checkFiatNews(fiatListingHandler)
-		if newFiats != nil {
-			worker.buyNewFiat(newFiats)
-			worker.isWorking = false
-		}
-
-		time.Sleep(1 * time.Second)
-	}
-	cmn.LogInfo.Print("Monitoring finished.")
-}
-
-func checkCryptoNews(handler scraper.ScrapHandler) (symbol.Assets, bool) {
-	news, err := handler.GetLatestNews()
-	if err != nil {
-		_, isOkay := err.(*scraper.NoNewsUpdate)
-		if !isOkay {
-			cmn.LogError.Print(err.Error())
-			return symbol.Assets{}, false
-		}
-	}
-
-	if !strings.Contains(news.Header, "Binance Will List") {
-		return symbol.Assets{}, false
-	}
-
-	headerWords := strings.Fields(news.Header)
-	for _, word := range headerWords {
-		if strings.HasPrefix(word, "(") && strings.HasSuffix(word, ")") {
-			cmn.LogInfo.Print("New crypto ", word[1:len(word)-1])
-			return symbol.Assets{
-				Base:  word[1 : len(word)-1],
-				Quote: usdt,
-			}, true
-		}
-	}
-
-	return symbol.Assets{}, false
-}
-
-func checkFiatNews(handler scraper.ScrapHandler) []symbol.Assets {
-	news, err := handler.GetLatestNews()
-	if err != nil {
-		_, isOkay := err.(*scraper.NoNewsUpdate)
-		if !isOkay {
-			cmn.LogError.Print(err.Error())
-			return nil
-		}
-	}
-
-	if !strings.Contains(news.Header, "Binance Adds") {
-		return nil
-	}
-
-	fiatList := make([]string, 0)
-	headerWords := strings.Fields(news.Header)
-	for _, word := range headerWords {
-		if strings.Contains(word, "/") {
-			if strings.HasSuffix(word, ",") {
-				fiatList = append(fiatList, word[:len(word)-1])
+		announcedDetails, err := handler.GetLatestAnnounce()
+		if err != nil {
+			if _, isOkay := err.(*scraper.NoNewsUpdate); isOkay {
+				cmn.LogWarning.Print(err.Error())
 			} else {
-				fiatList = append(fiatList, word[:])
+				cmn.LogError.Print(err.Error())
 			}
-			cmn.LogInfo.Print("New fiat ", fiatList[len(fiatList)-1])
-		}
-	}
-
-	if len(fiatList) == 0 {
-		return nil
-	}
-
-	return splitSymbols(fiatList, "/")
-}
-
-func splitSymbols(symbolsList []string, delimiter string) []symbol.Assets {
-	symbolsAssetsList := make([]symbol.Assets, 0)
-	for _, symb := range symbolsList {
-		idx := strings.Index(symb, delimiter)
-		if idx == -1 {
 			continue
 		}
 
-		symbolsAssetsList = append(symbolsAssetsList, symbol.Assets{
-			Base:  symb[:idx],
-			Quote: symb[idx+1:],
-		})
-	}
+		cmn.LogInfo.Print("New announcement on Binance.")
+		worker.processAnnouncement(announcedDetails)
 
-	if len(symbolsList) == 0 {
-		return nil
+		err = worker.binanceConn.UpdateSymbolsList()
+		if err != nil {
+			cmn.LogInfo.Print("Failed to get symbols list from Binance")
+		}
 	}
+}
 
-	return symbolsAssetsList
+func (worker *Worker) processAnnouncement(announcedDetails announcement.Details) {
+	symbolAssets, announcedType := analyzer.AnnouncementSymbol(announcedDetails)
+	switch announcedType {
+	case announcement.Unknown:
+		cmn.LogWarning.Print("This new announcement is unuseful for Bascrap")
+		break
+	case announcement.NewCrypto:
+		if symbolAssets.IsEmpty() {
+			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
+				announcedDetails.Header)
+		} else {
+			quantity := worker.buyNewCrypto(symbolAssets)
+			if quantity != 0 {
+				cmn.LogInfo.Printf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
+					symbolAssets.Base, quantity)
+			} else {
+				cmn.LogWarning.Print("New crypto buying failed.")
+			}
+		}
+		break
+	case announcement.NewTradingPair:
+		if symbolAssets.IsEmpty() {
+			cmn.LogWarning.Print("New trading pair did not get form latest announcement header. -- " +
+				announcedDetails.Header)
+		} else {
+			buyPair, quantity := worker.buyNewFiat(symbolAssets)
+			if !buyPair.IsEmpty() && quantity != 0 {
+				cmn.LogInfo.Printf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f",
+					buyPair.Base, buyPair.Quote, quantity)
+			} else {
+				cmn.LogWarning.Print("New fiat buy failed.")
+			}
+		}
+		break
+	}
 }

@@ -1,4 +1,4 @@
-initial_funds = 12.0 # in usdt
+initial_funds = 12.0 # in busd
 
 [binance_api_cred]
 key = ""
