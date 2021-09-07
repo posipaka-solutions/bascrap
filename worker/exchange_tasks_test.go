@@ -39,7 +39,7 @@ func TestFiatBuy(t *testing.T) {
 			},
 		})
 
-		exchange.EXPECT().SetOrder(gomock.Any()).DoAndReturn(func(parameters order.Parameters) (float64, error) {
+		exchange.EXPECT().SetOrder(gomock.Any()).MaxTimes(1).DoAndReturn(func(parameters order.Parameters) (float64, error) {
 			if parameters.Assets.IsEqual(symbol.Assets{
 				Base:  "KMA",
 				Quote: "BUSD",
@@ -77,7 +77,7 @@ func TestFiatBuy(t *testing.T) {
 			},
 		})
 
-		exchange.EXPECT().SetOrder(gomock.Any()).AnyTimes().DoAndReturn(func(parameters order.Parameters) (float64, error) {
+		exchange.EXPECT().SetOrder(gomock.Any()).MaxTimes(2).DoAndReturn(func(parameters order.Parameters) (float64, error) {
 			if parameters.Assets.IsEqual(symbol.Assets{
 				Base:  "BTC",
 				Quote: "BUSD",
@@ -118,7 +118,7 @@ func TestFiatBuy(t *testing.T) {
 			},
 		})
 
-		exchange.EXPECT().SetOrder(gomock.Any()).AnyTimes().DoAndReturn(func(parameters order.Parameters) (float64, error) {
+		exchange.EXPECT().SetOrder(gomock.Any()).MaxTimes(2).DoAndReturn(func(parameters order.Parameters) (float64, error) {
 			if parameters.Assets.IsEqual(symbol.Assets{
 				Base:  "BUSD",
 				Quote: "USDT",
@@ -128,7 +128,7 @@ func TestFiatBuy(t *testing.T) {
 			}) {
 				return 123, nil
 			} else {
-				return 0, errors.New("not suitable pair")
+				return 0, errors.New("not suitable pair, base: " + parameters.Assets.Base + " quote: " + parameters.Assets.Quote)
 			}
 		})
 
