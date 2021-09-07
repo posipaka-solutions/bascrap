@@ -16,152 +16,193 @@ func TestFiatBuy(t *testing.T) {
 
 	cmn.InitLoggers("")
 
-	exchange := mockexchangeapi.NewMockApiConnector(ctrl)
-	worker := New(exchange, nil, 15)
-
-	t.Run("Purchase without money transfer", func(t *testing.T) {
+	t.Run("PurchaseWithoutMoneyTransfer", func(t *testing.T) {
+		exchange := mockexchangeapi.NewMockApiConnector(ctrl)
 		exchange.EXPECT().GetSymbolsList().Return([]symbol.Assets{
-			symbol.Assets{
-				Base:  "KMA",
-				Quote: "EUR",
-			},
-			symbol.Assets{
-				Base:  "KMA",
-				Quote: "BUSD",
-			},
-			symbol.Assets{
-				Base:  "BTC",
-				Quote: "EUR",
-			},
-			symbol.Assets{
-				Base:  "KMA",
-				Quote: "BTC",
-			},
+			{"KMA", "EUR"}, {"KMA", "BUSD"},
+			{"BTC", "EUR"}, {"KMA", "BTC"},
 		})
 
-		exchange.EXPECT().SetOrder(gomock.Any()).MaxTimes(1).DoAndReturn(func(parameters order.Parameters) (float64, error) {
-			if parameters.Assets.IsEqual(symbol.Assets{
-				Base:  "KMA",
-				Quote: "BUSD",
-			}) {
-				return 123, nil
-			} else {
-				return 0, errors.New("not suitable pair")
-			}
-		})
-
-		res := worker.buyNewFiat(symbol.Assets{
+		initialFunds := 22.8
+		newSymbolQuantity := 3.14
+		newSymbol := symbol.Assets{
 			Base:  "KMA",
 			Quote: "USDT",
+		}
+
+		exchange.EXPECT().SetOrder(gomock.Any()).MaxTimes(1).DoAndReturn(func(parameters order.Parameters) (float64, error) {
+			if parameters.Quantity != initialFunds {
+				return 0, errors.New("funds value is incorrect")
+			}
+			if parameters.Side != order.Buy {
+				return 0, errors.New("incorrect order side")
+			}
+			if parameters.Type != order.Market {
+				return 0, errors.New("incorrect order type")
+			}
+			if !parameters.Assets.IsEqual(symbol.Assets{Base: "KMA", Quote: "BUSD"}) {
+				return 0, errors.New("incorrect trading pair")
+			}
+			return newSymbolQuantity, nil
 		})
 
-		if !res {
-			t.Error("Buying failed")
+		worker := New(exchange, nil, initialFunds)
+		symb, quantity := worker.buyNewFiat(newSymbol)
+
+		if symb.IsEmpty() {
+			t.Errorf("New fiat bought symbol is empty. Expected: %s%s", newSymbol.Base, newSymbol.Quote)
 			return
+		}
+
+		if quantity != newSymbolQuantity {
+			t.Errorf("Bought quantity incorrect. Expected: %f", newSymbolQuantity)
 		}
 	})
 
-	t.Run("Transfer money before new pair buy", func(t *testing.T) {
+	t.Run("TransferMoneyBeforeNewPairBuy", func(t *testing.T) {
+		exchange := mockexchangeapi.NewMockApiConnector(ctrl)
 		exchange.EXPECT().GetSymbolsList().Return([]symbol.Assets{
-			symbol.Assets{
-				Base:  "KMA",
-				Quote: "EUR",
-			},
-			symbol.Assets{
-				Base:  "BTC",
-				Quote: "EUR",
-			},
-			symbol.Assets{
-				Base:  "KMA",
-				Quote: "BTC",
-			},
+			{"KMA", "EUR"}, {"BTC", "EUR"}, {"KMA", "BTC"},
 		})
 
+		initialFunds := 22.8
+		quantityAfterTransfer := 3.14
+		newSymbolQuantity := 5.89
+		newSymbol := symbol.Assets{
+			Base:  "KMA",
+			Quote: "USDT",
+		}
+
 		exchange.EXPECT().SetOrder(gomock.Any()).MaxTimes(2).DoAndReturn(func(parameters order.Parameters) (float64, error) {
-			if parameters.Assets.IsEqual(symbol.Assets{
-				Base:  "BTC",
-				Quote: "BUSD",
-			}) || parameters.Assets.IsEqual(symbol.Assets{
-				Base:  "KMA",
-				Quote: "BTC",
-			}) {
-				return 123, nil
+			if parameters.Side != order.Buy {
+				return 0, errors.New("incorrect order side")
+			}
+			if parameters.Type != order.Market {
+				return 0, errors.New("incorrect order type")
+			}
+
+			if parameters.Assets.IsEqual(symbol.Assets{Base: "BTC", Quote: "BUSD"}) {
+				if parameters.Quantity != initialFunds {
+					return 0, errors.New("funds value for transfer is incorrect")
+				}
+				return quantityAfterTransfer, nil
+			} else if parameters.Assets.IsEqual(symbol.Assets{Base: "KMA", Quote: "BTC"}) {
+				if parameters.Quantity != quantityAfterTransfer {
+					return 0, errors.New("funds value for buy is incorrect")
+				}
+				return newSymbolQuantity, nil
 			} else {
-				return 0, errors.New("not suitable pair")
+				return 0, errors.New("incorrect trading pair")
+
 			}
 		})
 
-		res := worker.buyNewFiat(symbol.Assets{
-			Base:  "KMA",
-			Quote: "USDT",
-		})
+		worker := New(exchange, nil, initialFunds)
+		symb, quantity := worker.buyNewFiat(newSymbol)
 
-		if !res {
-			t.Error("Buying failed")
+		if symb.IsEmpty() {
+			t.Errorf("New fiat bought symbol is empty. Expected: %s%s", newSymbol.Base, newSymbol.Quote)
 			return
+		}
+
+		if quantity != newSymbolQuantity {
+			t.Errorf("Bought quantity incorrect. Expected: %f", newSymbolQuantity)
 		}
 	})
 
 	t.Run("NewPairQuoteBusd", func(t *testing.T) {
+		exchange := mockexchangeapi.NewMockApiConnector(ctrl)
 		exchange.EXPECT().GetSymbolsList().Return([]symbol.Assets{
-			symbol.Assets{
-				Base:  "KMA",
-				Quote: "USDT",
-			},
-			symbol.Assets{
-				Base:  "BTC",
-				Quote: "EUR",
-			},
-			symbol.Assets{
-				Base:  "KMA",
-				Quote: "BTC",
-			},
+			{"KMA", "USDT"}, {"BTC", "EUR"}, {"KMA", "BTC"},
 		})
 
+		initialFunds := 22.8
+		quantityAfterTransfer := 3.14
+		newSymbolQuantity := 5.89
+		newSymbol := symbol.Assets{
+			Base:  "KMA",
+			Quote: "BUSD",
+		}
+
 		exchange.EXPECT().SetOrder(gomock.Any()).MaxTimes(2).DoAndReturn(func(parameters order.Parameters) (float64, error) {
-			if parameters.Assets.IsEqual(symbol.Assets{
-				Base:  "BUSD",
-				Quote: "USDT",
-			}) || parameters.Assets.IsEqual(symbol.Assets{
-				Base:  "KMA",
-				Quote: "USDT",
-			}) {
-				return 123, nil
+			if parameters.Type != order.Market {
+				return 0, errors.New("incorrect order type")
+			}
+			if parameters.Side == order.Buy {
+				if !parameters.Assets.IsEqual(symbol.Assets{Base: "KMA", Quote: "USDT"}) {
+					return 0, errors.New("incorrect trading pair for BUY order")
+				}
+				if parameters.Quantity != quantityAfterTransfer {
+					return 0, errors.New("funds value for buy is incorrect")
+				}
+				return newSymbolQuantity, nil
+			} else if parameters.Side == order.Sell {
+				if !parameters.Assets.IsEqual(symbol.Assets{Base: "BUSD", Quote: "USDT"}) {
+					return 0, errors.New("incorrect trading pair for SELL order")
+				}
+				if parameters.Quantity != initialFunds {
+					return 0, errors.New("funds value for transfer is incorrect")
+				}
+				return quantityAfterTransfer, nil
 			} else {
-				return 0, errors.New("not suitable pair, base: " + parameters.Assets.Base + " quote: " + parameters.Assets.Quote)
+				return 0, errors.New("incorrect order side")
 			}
 		})
 
-		res := worker.buyNewFiat(symbol.Assets{
-			Base:  "KMA",
-			Quote: "BUSD",
-		})
+		worker := New(exchange, nil, initialFunds)
+		symb, quantity := worker.buyNewFiat(newSymbol)
 
-		if !res {
-			t.Error("Buying failed")
+		if symb.IsEmpty() {
+			t.Errorf("New fiat bought symbol is empty. Expected: %s%s", newSymbol.Base, newSymbol.Quote)
 			return
+		}
+
+		if quantity != newSymbolQuantity {
+			t.Errorf("Bought quantity incorrect. Expected: %f", newSymbolQuantity)
 		}
 	})
 
 	t.Run("NoSuitablePairForBuy", func(t *testing.T) {
+		exchange := mockexchangeapi.NewMockApiConnector(ctrl)
 		exchange.EXPECT().GetSymbolsList().Return([]symbol.Assets{
-			symbol.Assets{
-				Base:  "KMA",
-				Quote: "LOC",
-			},
-			symbol.Assets{
-				Base:  "BTC",
-				Quote: "EUR",
-			},
+			{"KMA", "LOC"}, {"BTC", "EUR"},
 		})
+		exchange.EXPECT().SetOrder(gomock.Any()).Times(0)
 
-		res := worker.buyNewFiat(symbol.Assets{
+		worker := New(exchange, nil, 15)
+		symb, quantity := worker.buyNewFiat(symbol.Assets{
 			Base:  "KMA",
 			Quote: "BUSD",
 		})
 
-		if res {
-			t.Error("Bought despite the absent of suitable pair for buy.")
+		if !symb.IsEmpty() {
+			t.Errorf("Symbol value is not empty. Expected: empty. Actual: %s%s", symb.Base, symb.Quote)
+			return
+		}
+		if quantity != 0 {
+			t.Errorf("Quantity value is not zero. Expected: zero. Actual: %f", quantity)
+			return
+		}
+	})
+
+	t.Run("EmptySymbolsList", func(t *testing.T) {
+		exchange := mockexchangeapi.NewMockApiConnector(ctrl)
+		exchange.EXPECT().GetSymbolsList().Return([]symbol.Assets{})
+		exchange.EXPECT().SetOrder(gomock.Any()).Times(0)
+
+		worker := New(exchange, nil, 15)
+		symb, quantity := worker.buyNewFiat(symbol.Assets{
+			Base:  "KMA",
+			Quote: "BUSD",
+		})
+
+		if !symb.IsEmpty() {
+			t.Errorf("Symbol value is not empty. Expected: empty. Actual: %s%s", symb.Base, symb.Quote)
+			return
+		}
+
+		if quantity != 0 {
+			t.Errorf("Quantity value is not zero. Expected: zero. Actual: %f", quantity)
 			return
 		}
 	})
