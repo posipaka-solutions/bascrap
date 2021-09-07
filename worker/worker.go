@@ -81,7 +81,12 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New trading pair did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
-			worker.buyNewFiat(symbolAssets)
+			buyPair, quantity := worker.buyNewFiat(symbolAssets)
+			if !buyPair.IsEmpty() && quantity != 0 {
+				cmn.LogInfo.Printf("Bascrap bought %f %s", quantity, buyPair.Base)
+			} else {
+				cmn.LogWarning.Print("New fiat buy failed.")
+			}
 		}
 		break
 	}

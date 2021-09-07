@@ -7,25 +7,26 @@ import (
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
 )
 
-func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) bool {
+// buyNewCrypto returns bought quantity of base
+func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) float64 {
 	limits, err := worker.gateioConn.GetSymbolLimits(newSymbol)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
-		return false
+		return 0
 	}
 	worker.gateioConn.AddLimits(limits)
 
 	price, err := worker.gateioConn.GetCurrentPrice(newSymbol)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
-		return false
+		return 0
 	}
-	cmn.LogInfo.Print(newSymbol.Base, newSymbol.Quote, " -> ", price)
+	cmn.LogInfo.Printf("Price for %s%s at gate.io -> %f", newSymbol.Base, newSymbol.Quote, price)
 
 	return worker.setCryptoOrder(newSymbol, price)
 }
 
-func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) bool {
+func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) float64 {
 	parameters := order.Parameters{
 		Assets:   newSymbol,
 		Side:     order.Buy,
@@ -33,27 +34,31 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) boo
 		Quantity: worker.initialFunds / (price * 1.05),
 		Price:    price * 1.05,
 	}
-	cmn.LogInfo.Printf("Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
-	_, err := worker.gateioConn.SetOrder(parameters)
+
+	cmn.LogInfo.Printf("Limit order on gate.io: Quantity value - %f, Price value - %f",
+		parameters.Quantity, parameters.Price)
+
+	quantity, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
-		return false
+		return 0
 	}
-	cmn.LogInfo.Print("Order was set at gate.io")
-	return true
+
+	return quantity
 }
 
-func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) bool {
+// buyNewFiat perform buy of base asset of new fiat pair. Returns symbol and quantity of buy transactions
+func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, float64) {
 	buyPair := worker.selectBuyPair(newTradingPair)
 	if buyPair.IsEmpty() {
 		cmn.LogError.Print("New trading pair are missing because suitable buy pair for it not found.")
-		return false
+		return symbol.Assets{}, 0
 	}
 
 	if buyPair.Quote != assets.Busd {
 		newQuoteQuantity := worker.transferFunds(buyPair)
 		if newQuoteQuantity == 0 {
-			return false
+			return symbol.Assets{}, 0
 		}
 		worker.initialFunds = newQuoteQuantity
 	}
@@ -67,11 +72,10 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) bool {
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
 		cmn.LogError.Print(err)
-		return false
+		return symbol.Assets{}, 0
 	}
 
-	cmn.LogInfo.Printf("Bascrap bought %f %s", quantity, buyPair.Base)
-	return true
+	return buyPair, quantity
 }
 
 func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
