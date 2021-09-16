@@ -9,12 +9,12 @@ import (
 
 // buyNewCrypto returns bought quantity of base
 func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) float64 {
-	limits, err := worker.gateioConn.GetSymbolLimits(newSymbol)
-	if err != nil {
-		cmn.LogError.Print(err.Error())
-		return 0
-	}
-	worker.gateioConn.AddLimits(limits)
+	//limits, err := worker.gateioConn.GetSymbolLimits(newSymbol)
+	//if err != nil {
+	//	cmn.LogError.Print(err.Error())
+	//	return 0
+	//}
+	//worker.gateioConn.AddLimits(limits)
 
 	price, err := worker.gateioConn.GetCurrentPrice(newSymbol)
 	if err != nil {

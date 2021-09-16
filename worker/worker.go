@@ -27,11 +27,12 @@ func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worke
 
 func (worker *Worker) StartMonitoring() {
 	worker.isWorking = true
-	err := worker.binanceConn.UpdateSymbolsList()
+
+	limits, err := worker.binanceConn.GetSymbolsLimits()
 	if err != nil {
-		cmn.LogInfo.Print("Failed to get symbols list from Binance")
-		return
+		cmn.LogInfo.Print("Failed to get symbols limits from Binance")
 	}
+	worker.binanceConn.StoreSymbolsLimits(limits)
 
 	worker.Wg.Add(2)
 	go worker.monitorController(announcement.NewCryptoListingUrl)
@@ -59,10 +60,13 @@ func (worker *Worker) monitorController(monitoringUrl string) {
 		cmn.LogInfo.Print("New announcement on Binance.")
 		worker.processAnnouncement(announcedDetails)
 
-		err = worker.binanceConn.UpdateSymbolsList()
+		limits, err := worker.binanceConn.GetSymbolsLimits()
 		if err != nil {
-			cmn.LogInfo.Print("Failed to get symbols list from Binance")
+			cmn.LogInfo.Print("Failed to get symbols limits from Binance")
 		}
+
+		worker.binanceConn.StoreSymbolsLimits(limits)
+
 	}
 }
 
