@@ -24,8 +24,8 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 		Assets:   newSymbol,
 		Side:     order.Buy,
 		Type:     order.Limit,
-		Quantity: worker.initialFunds / (price * 1.05),
-		Price:    price * 1.05,
+		Quantity: worker.initialFunds / (price * 1.5),
+		Price:    price * 1.5,
 	}
 
 	cmn.LogInfo.Printf("Limit order on gate.io: Quantity value - %f, Price value - %f",

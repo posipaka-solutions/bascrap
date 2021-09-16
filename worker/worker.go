@@ -46,8 +46,7 @@ func (worker *Worker) StartMonitoring() {
 		return
 	}
 
-	worker.Wg.Add(2)
-	go worker.monitorController(tdlibClient)
+	worker.Wg.Add(1)
 	go worker.monitorController(tdlibClient)
 
 	cmn.LogInfo.Print("Monitoring started.")
@@ -77,7 +76,18 @@ func newTDLibClient() *client.Client {
 
 	tdlibClient, err := client.NewClient(authorizer, logVerbosity)
 	if err != nil {
-		cmn.LogError.Print("TDLib client creation failed. Error: ", err)
+		cmn.LogError.Print("TDLib client creation failed. Error: ", err.Error())
+		return nil
+	}
+
+	_, err = tdlibClient.GetChats(&client.GetChatsRequest{
+		ChatList:     nil,
+		OffsetOrder:  9223372036854775807,
+		OffsetChatId: 0,
+		Limit:        10,
+	})
+	if err != nil {
+		cmn.LogError.Print("Chat list request failed. Error: ", err.Error())
 		return nil
 	}
 
@@ -88,7 +98,7 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 	defer worker.Wg.Done()
 	handler := scraper.New(tclient)
 	for worker.isWorking {
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		announcedDetails, err := handler.GetLatestAnnounce()
 		if err != nil {
@@ -123,6 +133,7 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
+			cmn.LogInfo.Printf("%s/%s is new crypto pair announced.", symbolAssets.Base, symbolAssets.Quote)
 			quantity := worker.buyNewCrypto(symbolAssets)
 			if quantity != 0 {
 				cmn.LogInfo.Printf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
@@ -137,6 +148,7 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New trading pair did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
+			cmn.LogInfo.Printf("%s/%s is new trading pair announced.", symbolAssets.Base, symbolAssets.Quote)
 			buyPair, quantity := worker.buyNewFiat(symbolAssets)
 			if !buyPair.IsEmpty() && quantity != 0 {
 				cmn.LogInfo.Printf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f",
