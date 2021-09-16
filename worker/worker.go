@@ -6,8 +6,15 @@ import (
 	"github.com/posipaka-trade/bascrap/internal/scraper"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
+	"github.com/zelenin/go-tdlib/client"
+	"path/filepath"
 	"sync"
 	"time"
+)
+
+const (
+	apiId   = 8061033
+	apiHash = "5665589a975a637135402402542dd520"
 )
 
 type Worker struct {
@@ -34,16 +41,52 @@ func (worker *Worker) StartMonitoring() {
 	}
 	worker.binanceConn.StoreSymbolsLimits(limits)
 
+	tdlibClient := newTDLibClient()
+	if tdlibClient == nil {
+		return
+	}
+
 	worker.Wg.Add(2)
-	go worker.monitorController(announcement.NewCryptoListingUrl)
-	go worker.monitorController(announcement.NewFiatListingUrl)
+	go worker.monitorController(tdlibClient)
+	go worker.monitorController(tdlibClient)
 
 	cmn.LogInfo.Print("Monitoring started.")
 }
 
-func (worker *Worker) monitorController(monitoringUrl string) {
+func newTDLibClient() *client.Client {
+	authorizer := client.ClientAuthorizer()
+	go client.CliInteractor(authorizer)
+
+	authorizer.TdlibParameters <- &client.TdlibParameters{
+		DatabaseDirectory:      filepath.Join(".tdlib", "database"),
+		FilesDirectory:         filepath.Join(".tdlib", "files"),
+		UseFileDatabase:        true,
+		UseChatInfoDatabase:    true,
+		UseMessageDatabase:     true,
+		ApiId:                  apiId,
+		ApiHash:                apiHash,
+		SystemLanguageCode:     "en",
+		DeviceModel:            "PosipakaServer",
+		ApplicationVersion:     "0.9-development",
+		EnableStorageOptimizer: true,
+	}
+
+	logVerbosity := client.WithLogVerbosity(&client.SetLogVerbosityLevelRequest{
+		NewVerbosityLevel: 0,
+	})
+
+	tdlibClient, err := client.NewClient(authorizer, logVerbosity)
+	if err != nil {
+		cmn.LogError.Print("TDLib client creation failed. Error: ", err)
+		return nil
+	}
+
+	return tdlibClient
+}
+
+func (worker *Worker) monitorController(tclient *client.Client) {
 	defer worker.Wg.Done()
-	handler := scraper.New(monitoringUrl)
+	handler := scraper.New(tclient)
 	for worker.isWorking {
 		time.Sleep(5 * time.Second)
 
@@ -66,7 +109,6 @@ func (worker *Worker) monitorController(monitoringUrl string) {
 		}
 
 		worker.binanceConn.StoreSymbolsLimits(limits)
-
 	}
 }
 

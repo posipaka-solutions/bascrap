@@ -2,33 +2,24 @@ package scraper
 
 import (
 	"errors"
-	"fmt"
-	"github.com/PuerkitoBio/goquery"
 	"github.com/posipaka-trade/bascrap/internal/announcement"
-	"io"
-	"net/http"
+	"github.com/zelenin/go-tdlib/client"
+	"strings"
 )
 
-const binanceUrl = "https://www.binance.com"
 const (
-	announcementDiv = ".css-6f91y1"
-	newsListDiv     = ".css-vurnku"
+	binanceChannelId = -1001146915409
+	//testChannelId    = -1001146915409
 )
-
-func closeBody(response *http.Response) {
-	if err := response.Body.Close(); err != nil {
-		panic(err.Error())
-	}
-}
 
 type ScrapHandler struct {
 	latestAnnounce announcement.Details
-	monitoringUrl  string
+	tdlibClient    *client.Client
 }
 
-func New(link string) ScrapHandler {
+func New(tclient *client.Client) ScrapHandler {
 	handler := ScrapHandler{
-		monitoringUrl: link,
+		tdlibClient: tclient,
 	}
 
 	var err error
@@ -41,58 +32,36 @@ func New(link string) ScrapHandler {
 }
 
 func (handler *ScrapHandler) GetLatestAnnounce() (announcement.Details, error) {
-	resp, err := http.Get(handler.monitoringUrl)
-	if err != nil {
-		return announcement.Details{}, err
+	messagesReq := client.GetChatHistoryRequest{
+		ChatId:        binanceChannelId,
+		FromMessageId: 0,
+		Offset:        0,
+		Limit:         20,
+		OnlyLocal:     false,
 	}
-	defer closeBody(resp)
-
-	if resp.StatusCode != 200 {
-		return announcement.Details{},
-			errors.New(fmt.Sprintf("[scraper] -> Error when get html page. %d: %s", resp.StatusCode, resp.Status))
-	}
-
-	announcedDetails, err := parseHtml(resp.Body)
+	messages, err := handler.tdlibClient.GetChatHistory(&messagesReq)
 	if err != nil {
 		return announcement.Details{}, err
 	}
 
-	announcedDetails.SourceUrl = handler.monitoringUrl
+	content, isOkay := messages.Messages[0].Content.(*client.MessageVideo)
+	if !isOkay {
+		return announcement.Details{}, errors.New("[scraper] -> Message content casting failed")
+	}
+
+	announcedDetails := announcement.Details{
+		Header: content.Caption.Text,
+	}
+	linkIdx := strings.Index(content.Caption.Text, "https://")
+	if linkIdx != -1 {
+		announcedDetails.Header = content.Caption.Text[:linkIdx-1]
+		announcedDetails.Link = content.Caption.Text[linkIdx:]
+	}
+
 	if handler.latestAnnounce.Equal(announcedDetails) {
 		return announcement.Details{}, &NoNewsUpdate{}
 	}
 
 	handler.latestAnnounce = announcedDetails
 	return announcedDetails, nil
-}
-
-func parseHtml(reader io.Reader) (announcement.Details, error) {
-	doc, err := goquery.NewDocumentFromReader(reader)
-	if err != nil {
-		return announcement.Details{}, err
-	}
-
-	div := doc.Find(announcementDiv)
-	if div == nil {
-		return announcement.Details{}, errors.New("[scraper] -> Announcement div not found")
-	}
-	div = div.Find(newsListDiv)
-	if div == nil {
-		return announcement.Details{}, errors.New("[scraper] -> Info list div not found")
-	}
-
-	announce := announcement.Details{}
-	div.Find("a").Each(func(i int, s *goquery.Selection) {
-		if i != 0 {
-			return
-		}
-
-		announce.Header = s.Text()
-		link, exist := s.Attr("href")
-		if exist {
-			announce.Link = fmt.Sprint(binanceUrl, link)
-		}
-	})
-
-	return announce, nil
 }

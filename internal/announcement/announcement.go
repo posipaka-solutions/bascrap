@@ -20,13 +20,11 @@ var TypeAlias = map[Type]string{
 }
 
 type Details struct {
-	SourceUrl string
-	Header    string
-	Link      string
+	Header string
+	Link   string
 }
 
 func (details Details) Equal(otherDetails Details) bool {
 	return details.Header == otherDetails.Header &&
-		details.Link == otherDetails.Link &&
-		details.SourceUrl == otherDetails.SourceUrl
+		details.Link == otherDetails.Link
 }

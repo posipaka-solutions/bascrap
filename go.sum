@@ -4,8 +4,6 @@ github.com/andybalholm/cascadia v1.2.0 h1:vuRCkM5Ozh/BfmsaTm26kbjm0mIOM3yS5Ek/F5
 github.com/andybalholm/cascadia v1.2.0/go.mod h1:YCyR8vOZT9aZ1CHEd8ap0gMVm2aFgxBp0T0eFw1RUQY=
 github.com/golang/mock v1.6.0 h1:ErTB+efbowRARo13NNdxyJji2egdxLGQhRaY+DUumQc=
 github.com/golang/mock v1.6.0/go.mod h1:p6yTPP+5HYm5mzsMV8JkE6ZKdX+/wYM6Hr+LicevLPs=
-github.com/pelletier/go-toml v1.9.3 h1:zeC5b1GviRUyKYd6OJPvBU/mcVDVoL1OhT17FCt5dSQ=
-github.com/pelletier/go-toml v1.9.3/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhECwM=
 github.com/pelletier/go-toml v1.9.4/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/posipaka-trade/binance-api-go v0.0.0-20210916074410-0eb44a230e40 h1:O5+ragmGeyts4c/QONnLjpVzlmMcj8FBF7K/mbgX0hE=
@@ -13,11 +11,12 @@ github.com/posipaka-trade/binance-api-go v0.0.0-20210916074410-0eb44a230e40/go.m
 github.com/posipaka-trade/gate-api-go v0.0.0-20210915185908-dda183175a15 h1:KgzINF8sAbwJRZMWVzAJorOmTIu0NhEHpkXDSM8B5bk=
 github.com/posipaka-trade/gate-api-go v0.0.0-20210915185908-dda183175a15/go.mod h1:gERxo1U7Ltbtr1HjywcBs21d3mv01rvjkpYEdes/k5I=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210913150756-1cb5f18c5acb/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
-github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210913153209-4e8b4a5b7216 h1:xCH3D2izF66Bh0HdE9DLKvBM5OcMoJ4ttDzmuWgZy8g=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210913153209-4e8b4a5b7216/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210916083123-2ae82ae7a537 h1:YBrWn6wEB/YDhi8J0y0jLlkzoQ/hEpc7r2pffjr/QpA=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210916083123-2ae82ae7a537/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
+github.com/zelenin/go-tdlib v0.4.1 h1:qR50lonl+2tFJ/NWHtEhnFS0PLQwJUeXuUVPVqfKzBw=
+github.com/zelenin/go-tdlib v0.4.1/go.mod h1:Xs8fXbk5n7VaPyrSs9DP7QYoBScWYsjX+lUcWmx1DIU=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550/go.mod h1:yigFU9vqHzYiE8UmvKecakEJjdnWj3jj499lnFckfCI=
 golang.org/x/mod v0.4.2/go.mod h1:s0Qsj1ACt9ePp/hMypM3fl4fZqREWJwdYDEqhRiZZUA=
@@ -25,7 +24,6 @@ golang.org/x/net v0.0.0-20180218175443-cbe0f9307d01/go.mod h1:mL1N/T3taQHkDXs73r
 golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/net v0.0.0-20190620200207-3b0461eec859/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
 golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4/go.mod h1:p54w0d4576C0XHj96bSt6lcn1PtDYWL6XObtHCRCNQM=
-golang.org/x/net v0.0.0-20210614182718-04defd469f4e h1:XpT3nA5TvE525Ne3hInMh6+GETgn27Zfm9dxsThnX2Q=
 golang.org/x/net v0.0.0-20210614182718-04defd469f4e/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
 golang.org/x/net v0.0.0-20210916014120-12bc252f5db8 h1:/6y1LfuqNuQdHAm0jjtPtgRcxIxjVZgm5OTu8/QhZvk=
 golang.org/x/net v0.0.0-20210916014120-12bc252f5db8/go.mod h1:9nx3DQGgdP8bBQD5qxJ1jj9UTztislL4KSBs9R2vV5Y=
