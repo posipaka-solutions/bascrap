@@ -216,9 +216,7 @@ func TestNewCryptoBuy(t *testing.T) {
 	initialFunds := 22.8
 	cmn.InitLoggers("")
 	gateMock := mockexchangeapi.NewMockApiConnector(ctrl)
-	gateMock.EXPECT().GetSymbolLimits(gomock.Any()).Return(symbol.Limits{}, nil)
 	gateMock.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
-	gateMock.EXPECT().AddLimits(gomock.Any())
 	gateMock.EXPECT().SetOrder(gomock.Any()).Return(initialFunds/(price*1.05), nil)
 
 	worker := New(nil, gateMock, initialFunds)
