@@ -6,8 +6,15 @@ import (
 	"github.com/posipaka-trade/bascrap/internal/scraper"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
+	"github.com/zelenin/go-tdlib/client"
+	"path/filepath"
 	"sync"
 	"time"
+)
+
+const (
+	apiId   = 8061033
+	apiHash = "5665589a975a637135402402542dd520"
 )
 
 type Worker struct {
@@ -34,18 +41,64 @@ func (worker *Worker) StartMonitoring() {
 	}
 	worker.binanceConn.StoreSymbolsLimits(limits)
 
-	worker.Wg.Add(2)
-	go worker.monitorController(announcement.NewCryptoListingUrl)
-	go worker.monitorController(announcement.NewFiatListingUrl)
+	tdlibClient := newTDLibClient()
+	if tdlibClient == nil {
+		return
+	}
+
+	worker.Wg.Add(1)
+	go worker.monitorController(tdlibClient)
 
 	cmn.LogInfo.Print("Monitoring started.")
 }
 
-func (worker *Worker) monitorController(monitoringUrl string) {
+func newTDLibClient() *client.Client {
+	authorizer := client.ClientAuthorizer()
+	go client.CliInteractor(authorizer)
+
+	authorizer.TdlibParameters <- &client.TdlibParameters{
+		DatabaseDirectory:      filepath.Join(".tdlib", "database"),
+		FilesDirectory:         filepath.Join(".tdlib", "files"),
+		UseFileDatabase:        true,
+		UseChatInfoDatabase:    true,
+		UseMessageDatabase:     true,
+		ApiId:                  apiId,
+		ApiHash:                apiHash,
+		SystemLanguageCode:     "en",
+		DeviceModel:            "PosipakaServer",
+		ApplicationVersion:     "0.9-development",
+		EnableStorageOptimizer: true,
+	}
+
+	logVerbosity := client.WithLogVerbosity(&client.SetLogVerbosityLevelRequest{
+		NewVerbosityLevel: 0,
+	})
+
+	tdlibClient, err := client.NewClient(authorizer, logVerbosity)
+	if err != nil {
+		cmn.LogError.Print("TDLib client creation failed. Error: ", err.Error())
+		return nil
+	}
+
+	_, err = tdlibClient.GetChats(&client.GetChatsRequest{
+		ChatList:     nil,
+		OffsetOrder:  9223372036854775807,
+		OffsetChatId: 0,
+		Limit:        10,
+	})
+	if err != nil {
+		cmn.LogError.Print("Chat list request failed. Error: ", err.Error())
+		return nil
+	}
+
+	return tdlibClient
+}
+
+func (worker *Worker) monitorController(tclient *client.Client) {
 	defer worker.Wg.Done()
-	handler := scraper.New(monitoringUrl)
+	handler := scraper.New(tclient)
 	for worker.isWorking {
-		time.Sleep(5 * time.Second)
+		time.Sleep(2 * time.Second)
 
 		announcedDetails, err := handler.GetLatestAnnounce()
 		if err != nil {
@@ -66,7 +119,6 @@ func (worker *Worker) monitorController(monitoringUrl string) {
 		}
 
 		worker.binanceConn.StoreSymbolsLimits(limits)
-
 	}
 }
 
@@ -81,6 +133,7 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
+			cmn.LogInfo.Printf("%s/%s is new crypto pair announced.", symbolAssets.Base, symbolAssets.Quote)
 			quantity := worker.buyNewCrypto(symbolAssets)
 			if quantity != 0 {
 				cmn.LogInfo.Printf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
@@ -95,6 +148,7 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New trading pair did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
+			cmn.LogInfo.Printf("%s/%s is new trading pair announced.", symbolAssets.Base, symbolAssets.Quote)
 			buyPair, quantity := worker.buyNewFiat(symbolAssets)
 			if !buyPair.IsEmpty() && quantity != 0 {
 				cmn.LogInfo.Printf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f",
