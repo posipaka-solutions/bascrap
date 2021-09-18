@@ -2,6 +2,7 @@ package worker
 
 import (
 	"github.com/posipaka-trade/bascrap/internal/assets"
+	"github.com/posipaka-trade/bascrap/internal/telegram"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
@@ -28,12 +29,12 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 		Price:    price * 1.5,
 	}
 
-	cmn.LogInfo.Printf("Limit order on gate.io: Quantity value - %f, Price value - %f",
-		parameters.Quantity, parameters.Price)
+	cmn.LogInfo.Printf("Limit order on gate.io:\nQuantity value - %f, \nPrice value - %f", parameters.Quantity, parameters.Price)
 
 	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
+		telegram.SendMessageToChannel(err.Error(), worker.TdClient)
 		return 0
 	}
 
@@ -65,6 +66,7 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, f
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
 		cmn.LogError.Print(err)
+		telegram.SendMessageToChannel(err.Error(), worker.TdClient)
 		return symbol.Assets{}, 0
 	}
 

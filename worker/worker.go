@@ -1,20 +1,16 @@
 package worker
 
 import (
+	"fmt"
 	"github.com/posipaka-trade/bascrap/internal/announcement"
 	"github.com/posipaka-trade/bascrap/internal/announcement/analyzer"
 	"github.com/posipaka-trade/bascrap/internal/scraper"
+	"github.com/posipaka-trade/bascrap/internal/telegram"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
 	"github.com/zelenin/go-tdlib/client"
-	"path/filepath"
 	"sync"
 	"time"
-)
-
-const (
-	apiId   = 8061033
-	apiHash = "5665589a975a637135402402542dd520"
 )
 
 type Worker struct {
@@ -22,6 +18,7 @@ type Worker struct {
 	initialFunds            float64
 	Wg                      sync.WaitGroup
 	isWorking               bool
+	TdClient                *client.Client
 }
 
 func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worker {
@@ -41,57 +38,18 @@ func (worker *Worker) StartMonitoring() {
 	}
 	worker.binanceConn.StoreSymbolsLimits(limits)
 
-	tdlibClient := newTDLibClient()
+	tdlibClient := telegram.NewTDLibClient()
 	if tdlibClient == nil {
 		return
 	}
+	worker.TdClient = tdlibClient
 
 	worker.Wg.Add(1)
 	go worker.monitorController(tdlibClient)
 
-	cmn.LogInfo.Print("Monitoring started.")
-}
-
-func newTDLibClient() *client.Client {
-	authorizer := client.ClientAuthorizer()
-	go client.CliInteractor(authorizer)
-
-	authorizer.TdlibParameters <- &client.TdlibParameters{
-		DatabaseDirectory:      filepath.Join(".tdlib", "database"),
-		FilesDirectory:         filepath.Join(".tdlib", "files"),
-		UseFileDatabase:        true,
-		UseChatInfoDatabase:    true,
-		UseMessageDatabase:     true,
-		ApiId:                  apiId,
-		ApiHash:                apiHash,
-		SystemLanguageCode:     "en",
-		DeviceModel:            "PosipakaServer",
-		ApplicationVersion:     "0.9-development",
-		EnableStorageOptimizer: true,
-	}
-
-	logVerbosity := client.WithLogVerbosity(&client.SetLogVerbosityLevelRequest{
-		NewVerbosityLevel: 0,
-	})
-
-	tdlibClient, err := client.NewClient(authorizer, logVerbosity)
-	if err != nil {
-		cmn.LogError.Print("TDLib client creation failed. Error: ", err.Error())
-		return nil
-	}
-
-	_, err = tdlibClient.GetChats(&client.GetChatsRequest{
-		ChatList:     nil,
-		OffsetOrder:  9223372036854775807,
-		OffsetChatId: 0,
-		Limit:        10,
-	})
-	if err != nil {
-		cmn.LogError.Print("Chat list request failed. Error: ", err.Error())
-		return nil
-	}
-
-	return tdlibClient
+	monitoringInfo := "Monitoring started."
+	cmn.LogInfo.Print(monitoringInfo)
+	telegram.SendMessageToChannel(monitoringInfo, tdlibClient)
 }
 
 func (worker *Worker) monitorController(tclient *client.Client) {
@@ -133,11 +91,15 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
-			cmn.LogInfo.Printf("%s/%s is new crypto pair announced.", symbolAssets.Base, symbolAssets.Quote)
+			announcementInfo := fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote)
+			cmn.LogInfo.Printf(announcementInfo)
 			quantity := worker.buyNewCrypto(symbolAssets)
+			telegram.SendMessageToChannel(announcementInfo, worker.TdClient)
 			if quantity != 0 {
-				cmn.LogInfo.Printf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
+				cryptoInfo := fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
 					symbolAssets.Base, quantity)
+				cmn.LogInfo.Printf(cryptoInfo)
+				telegram.SendMessageToChannel(cryptoInfo, worker.TdClient)
 			} else {
 				cmn.LogWarning.Print("New crypto buying failed.")
 			}
@@ -148,11 +110,15 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New trading pair did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
-			cmn.LogInfo.Printf("%s/%s is new trading pair announced.", symbolAssets.Base, symbolAssets.Quote)
+			announcementInfo := fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote)
+			cmn.LogInfo.Printf(announcementInfo)
+
 			buyPair, quantity := worker.buyNewFiat(symbolAssets)
+			telegram.SendMessageToChannel(announcementInfo, worker.TdClient)
 			if !buyPair.IsEmpty() && quantity != 0 {
-				cmn.LogInfo.Printf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f",
-					buyPair.Base, buyPair.Quote, quantity)
+				fiatInfo := fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", buyPair.Base, buyPair.Quote, quantity)
+				cmn.LogInfo.Printf(fiatInfo)
+				telegram.SendMessageToChannel(fiatInfo, worker.TdClient)
 			} else {
 				cmn.LogWarning.Print("New fiat buy failed.")
 			}
