@@ -29,7 +29,7 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 		Price:    price * 1.5,
 	}
 
-	cmn.LogInfo.Printf("Limit order on gate.io:\nQuantity value - %f, \nPrice value - %f", parameters.Quantity, parameters.Price)
+	cmn.LogInfo.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
 
 	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {

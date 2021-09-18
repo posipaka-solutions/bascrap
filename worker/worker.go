@@ -93,8 +93,8 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 		} else {
 			announcementInfo := fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote)
 			cmn.LogInfo.Printf(announcementInfo)
-			quantity := worker.buyNewCrypto(symbolAssets)
 			telegram.SendMessageToChannel(announcementInfo, worker.TdClient)
+			quantity := worker.buyNewCrypto(symbolAssets)
 			if quantity != 0 {
 				cryptoInfo := fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
 					symbolAssets.Base, quantity)
@@ -112,9 +112,8 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 		} else {
 			announcementInfo := fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote)
 			cmn.LogInfo.Printf(announcementInfo)
-
-			buyPair, quantity := worker.buyNewFiat(symbolAssets)
 			telegram.SendMessageToChannel(announcementInfo, worker.TdClient)
+			buyPair, quantity := worker.buyNewFiat(symbolAssets)
 			if !buyPair.IsEmpty() && quantity != 0 {
 				fiatInfo := fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", buyPair.Base, buyPair.Quote, quantity)
 				cmn.LogInfo.Printf(fiatInfo)
