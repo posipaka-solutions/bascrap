@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	binanceChannelId = -1001146915409
+	//binanceChannelId = -1001146915409
 	//binanceChannelId    = -1001390705243 // testChannel
+	binanceChannelId = -1001501948186 //Oleg
 )
 
 type ScrapHandler struct {

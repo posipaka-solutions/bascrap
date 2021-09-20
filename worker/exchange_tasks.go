@@ -28,12 +28,12 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 		Price:    price * 1.5,
 	}
 
-	cmn.LogInfo.Printf("Limit order on gate.io: Quantity value - %f, Price value - %f",
-		parameters.Quantity, parameters.Price)
+	cmn.LogInfo.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
 
 	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
+		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
 		return 0
 	}
 
@@ -64,6 +64,7 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, f
 	}
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
+		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
 		cmn.LogError.Print(err)
 		return symbol.Assets{}, 0
 	}
@@ -90,6 +91,7 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
+		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
 		cmn.LogError.Print(err)
 		return 0
 	}
