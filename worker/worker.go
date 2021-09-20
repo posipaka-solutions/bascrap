@@ -71,7 +71,7 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 		cmn.LogInfo.Print("New announcement on Binance.")
 		worker.processAnnouncement(announcedDetails)
 
-		worker.getItemsForMessage()
+		worker.sendTelegramNotifications()
 
 		limits, err := worker.binanceConn.GetSymbolsLimits()
 		if err != nil {
@@ -129,7 +129,7 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 	}
 }
 
-func (worker *Worker) getItemsForMessage() {
+func (worker *Worker) sendTelegramNotifications() {
 
 	for i := 0; len(worker.NotificationsQueue) > i; i++ {
 		telegram.SendMessageToChannel(worker.NotificationsQueue[i], worker.TdClient)
