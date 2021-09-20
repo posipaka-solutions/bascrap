@@ -56,7 +56,7 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 	defer worker.Wg.Done()
 	handler := scraper.New(tclient)
 	for worker.isWorking {
-		time.Sleep(2 * time.Second)
+		time.Sleep(1 * time.Second)
 
 		announcedDetails, err := handler.GetLatestAnnounce()
 		if err != nil {
