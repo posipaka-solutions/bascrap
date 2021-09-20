@@ -12,27 +12,18 @@ const (
 	posipakaChannelId = -1001577983722
 )
 
-type Telegram struct {
-	Client *client.Client
-}
-
 func SendMessageToChannel(message string, tdlibClient *client.Client) {
 
-	test := client.InputMessageText{
+	text := client.InputMessageText{
 		Text: &client.FormattedText{
-			Text:     message,
-			Entities: nil,
+			Text: message,
 		},
-		DisableWebPagePreview: false,
-		ClearDraft:            false,
 	}
 	messageReq := client.SendMessageRequest{
 		ChatId:              posipakaChannelId,
 		MessageThreadId:     0,
 		ReplyToMessageId:    0,
-		Options:             nil,
-		ReplyMarkup:         nil,
-		InputMessageContent: &test,
+		InputMessageContent: &text,
 	}
 	_, err := tdlibClient.SendMessage(&messageReq)
 	if err != nil {
@@ -69,7 +60,6 @@ func NewTDLibClient() *client.Client {
 	}
 
 	_, err = tdlibClient.GetChats(&client.GetChatsRequest{
-		ChatList:     nil,
 		OffsetOrder:  9223372036854775807,
 		OffsetChatId: 0,
 		Limit:        10,

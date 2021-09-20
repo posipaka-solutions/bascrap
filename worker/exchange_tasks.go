@@ -2,7 +2,6 @@ package worker
 
 import (
 	"github.com/posipaka-trade/bascrap/internal/assets"
-	"github.com/posipaka-trade/bascrap/internal/telegram"
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
@@ -34,7 +33,7 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
-		telegram.SendMessageToChannel(err.Error(), worker.TdClient)
+		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
 		return 0
 	}
 
@@ -65,8 +64,8 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, f
 	}
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
+		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
 		cmn.LogError.Print(err)
-		telegram.SendMessageToChannel(err.Error(), worker.TdClient)
 		return symbol.Assets{}, 0
 	}
 
@@ -92,6 +91,7 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
+		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
 		cmn.LogError.Print(err)
 		return 0
 	}

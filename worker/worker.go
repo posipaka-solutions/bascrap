@@ -19,6 +19,7 @@ type Worker struct {
 	Wg                      sync.WaitGroup
 	isWorking               bool
 	TdClient                *client.Client
+	NotificationsQueue      []string
 }
 
 func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worker {
@@ -38,18 +39,17 @@ func (worker *Worker) StartMonitoring() {
 	}
 	worker.binanceConn.StoreSymbolsLimits(limits)
 
-	tdlibClient := telegram.NewTDLibClient()
-	if tdlibClient == nil {
+	worker.TdClient = telegram.NewTDLibClient()
+	if worker.TdClient == nil {
 		return
 	}
-	worker.TdClient = tdlibClient
 
 	worker.Wg.Add(1)
-	go worker.monitorController(tdlibClient)
+	go worker.monitorController(worker.TdClient)
 
 	monitoringInfo := "Monitoring started."
 	cmn.LogInfo.Print(monitoringInfo)
-	telegram.SendMessageToChannel(monitoringInfo, tdlibClient)
+	telegram.SendMessageToChannel(monitoringInfo, worker.TdClient)
 }
 
 func (worker *Worker) monitorController(tclient *client.Client) {
@@ -71,12 +71,15 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 		cmn.LogInfo.Print("New announcement on Binance.")
 		worker.processAnnouncement(announcedDetails)
 
+		worker.getItemsForMessage()
+
 		limits, err := worker.binanceConn.GetSymbolsLimits()
 		if err != nil {
 			cmn.LogInfo.Print("Failed to get symbols limits from Binance")
 		}
 
 		worker.binanceConn.StoreSymbolsLimits(limits)
+
 	}
 }
 
@@ -93,13 +96,13 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 		} else {
 			announcementInfo := fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote)
 			cmn.LogInfo.Printf(announcementInfo)
-			telegram.SendMessageToChannel(announcementInfo, worker.TdClient)
+			worker.NotificationsQueue = append(worker.NotificationsQueue, announcementInfo)
 			quantity := worker.buyNewCrypto(symbolAssets)
 			if quantity != 0 {
 				cryptoInfo := fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
 					symbolAssets.Base, quantity)
 				cmn.LogInfo.Printf(cryptoInfo)
-				telegram.SendMessageToChannel(cryptoInfo, worker.TdClient)
+				worker.NotificationsQueue = append(worker.NotificationsQueue, cryptoInfo)
 			} else {
 				cmn.LogWarning.Print("New crypto buying failed.")
 			}
@@ -112,16 +115,25 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 		} else {
 			announcementInfo := fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote)
 			cmn.LogInfo.Printf(announcementInfo)
-			telegram.SendMessageToChannel(announcementInfo, worker.TdClient)
+			worker.NotificationsQueue = append(worker.NotificationsQueue, announcementInfo)
 			buyPair, quantity := worker.buyNewFiat(symbolAssets)
 			if !buyPair.IsEmpty() && quantity != 0 {
 				fiatInfo := fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", buyPair.Base, buyPair.Quote, quantity)
 				cmn.LogInfo.Printf(fiatInfo)
-				telegram.SendMessageToChannel(fiatInfo, worker.TdClient)
+				worker.NotificationsQueue = append(worker.NotificationsQueue, fiatInfo)
 			} else {
 				cmn.LogWarning.Print("New fiat buy failed.")
 			}
 		}
 		break
 	}
+}
+
+func (worker *Worker) getItemsForMessage() {
+
+	for i := 0; len(worker.NotificationsQueue) > i; i++ {
+		telegram.SendMessageToChannel(worker.NotificationsQueue[i], worker.TdClient)
+		time.Sleep(1 * time.Second)
+	}
+	worker.NotificationsQueue = nil
 }
