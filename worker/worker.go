@@ -9,6 +9,7 @@ import (
 	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
 	"github.com/zelenin/go-tdlib/client"
+	"strings"
 	"sync"
 	"time"
 )
@@ -56,7 +57,7 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 	defer worker.Wg.Done()
 	handler := scraper.New(tclient)
 	for worker.isWorking {
-		time.Sleep(1 * time.Second)
+		time.Sleep(time.Millisecond)
 
 		announcedDetails, err := handler.GetLatestAnnounce()
 		if err != nil {
@@ -91,6 +92,11 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
+			if strings.Contains(announcedDetails.Link, "Innovation Zone") {
+				worker.NotificationsQueue = append(worker.NotificationsQueue,
+					fmt.Sprintf("New crypto %s appears in the Innovation Zone", symbolAssets.Base))
+				return
+			}
 			announcementInfo := fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote)
 			cmn.LogInfo.Printf(announcementInfo)
 			worker.NotificationsQueue = append(worker.NotificationsQueue, announcementInfo)
