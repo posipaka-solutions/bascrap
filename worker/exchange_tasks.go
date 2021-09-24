@@ -33,7 +33,7 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
 		cmn.LogError.Print(err.Error())
-		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
+		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 		return 0
 	}
 
@@ -64,7 +64,7 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, f
 	}
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
-		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
+		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 		cmn.LogError.Print(err)
 		return symbol.Assets{}, 0
 	}
@@ -91,7 +91,7 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
-		worker.NotificationsQueue = append(worker.NotificationsQueue, err.Error())
+		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 		cmn.LogError.Print(err)
 		return 0
 	}
