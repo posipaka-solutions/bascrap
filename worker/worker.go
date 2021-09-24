@@ -27,11 +27,15 @@ type Worker struct {
 }
 
 func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worker {
-	return &Worker{
-		initialFunds: funds,
-		gateioConn:   gateioConn,
-		binanceConn:  binanceConn,
+	worker := &Worker{
+		initialFunds:       funds,
+		gateioConn:         gateioConn,
+		binanceConn:        binanceConn,
+		notificationsQueue: make([]string, 15),
 	}
+
+	worker.notificationsQueue = worker.notificationsQueue[:0]
+	return worker
 }
 
 func (worker *Worker) StartMonitoring() {
