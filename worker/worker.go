@@ -60,9 +60,7 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 
 		announcedDetails, err := handler.GetLatestAnnounce()
 		if err != nil {
-			if _, isOkay := err.(*scraper.NoNewsUpdate); isOkay {
-				cmn.LogWarning.Print(err.Error())
-			} else {
+			if _, isOkay := err.(*scraper.NoNewsUpdate); !isOkay {
 				cmn.LogError.Print(err.Error())
 			}
 			continue
@@ -79,7 +77,6 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 		}
 
 		worker.binanceConn.StoreSymbolsLimits(limits)
-
 	}
 }
 
