@@ -75,7 +75,7 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 		}
 
 		log.Info.Print("New announcement on Binance.")
-		worker.processAnnouncement(announcedDetails)
+		worker.processAnnouncement(&announcedDetails)
 
 		worker.sendTelegramNotifications()
 
@@ -88,7 +88,7 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 	}
 }
 
-func (worker *Worker) processAnnouncement(announcedDetails announcement.Details) {
+func (worker *Worker) processAnnouncement(announcedDetails *announcement.Details) {
 	symbolAssets, announcedType := analyzer.AnnouncementSymbol(announcedDetails)
 	switch announcedType {
 	case announcement.Unknown:
@@ -119,31 +119,35 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 }
 
 func (worker *Worker) processCryptoAnnouncement(symbolAssets symbol.Assets) {
-	announcementInfo := fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote)
-	log.Info.Printf(announcementInfo)
-	worker.notificationsQueue = append(worker.notificationsQueue, announcementInfo)
+	worker.notificationsQueue = append(worker.notificationsQueue,
+		fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote))
+	log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
+
 	quantity := worker.buyNewCrypto(symbolAssets)
 	if quantity != 0 {
-		cryptoInfo := fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
-			symbolAssets.Base, quantity)
-		log.Info.Printf(cryptoInfo)
-		worker.notificationsQueue = append(worker.notificationsQueue, cryptoInfo)
+		worker.notificationsQueue = append(worker.notificationsQueue,
+			fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f", symbolAssets.Base, quantity))
+		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 	} else {
-		log.Warning.Print("New crypto buying failed.")
+		worker.notificationsQueue = append(worker.notificationsQueue, "New crypto buying failed.")
+		log.Warning.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 	}
 }
 
 func (worker *Worker) processTradingPairAnnouncement(symbolAssets symbol.Assets) {
-	announcementInfo := fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote)
-	log.Info.Printf(announcementInfo)
-	worker.notificationsQueue = append(worker.notificationsQueue, announcementInfo)
+	worker.notificationsQueue = append(worker.notificationsQueue,
+		fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote))
+	log.Info.Printf(worker.notificationsQueue[len(worker.notificationsQueue)-1])
+
 	buyPair, quantity := worker.buyNewFiat(symbolAssets)
 	if !buyPair.IsEmpty() && quantity != 0 {
-		fiatInfo := fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", buyPair.Base, buyPair.Quote, quantity)
-		log.Info.Printf(fiatInfo)
-		worker.notificationsQueue = append(worker.notificationsQueue, fiatInfo)
+		worker.notificationsQueue = append(worker.notificationsQueue,
+			fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", buyPair.Base,
+				buyPair.Quote, quantity))
+		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 	} else {
-		log.Warning.Print("New fiat buy failed.")
+		worker.notificationsQueue = append(worker.notificationsQueue, "New fiat buy failed.")
+		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 	}
 }
 

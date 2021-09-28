@@ -28,9 +28,8 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 		Price:    price * 1.5,
 	}
 
-	log.Info.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
-
 	_, err := worker.gateioConn.SetOrder(parameters)
+	log.Info.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
 	if err != nil {
 		log.Error.Print(err.Error())
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
