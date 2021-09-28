@@ -2,19 +2,19 @@ package worker
 
 import (
 	"github.com/posipaka-trade/bascrap/internal/assets"
-	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
+	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 )
 
 // buyNewCrypto returns bought quantity of base
 func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) float64 {
 	price, err := worker.gateioConn.GetCurrentPrice(newSymbol)
 	if err != nil {
-		cmn.LogError.Print(err.Error())
+		log.Error.Print(err.Error())
 		return 0
 	}
-	cmn.LogInfo.Printf("Price for %s%s at gate.io -> %f", newSymbol.Base, newSymbol.Quote, price)
+	log.Info.Printf("Price for %s%s at gate.io -> %f", newSymbol.Base, newSymbol.Quote, price)
 
 	return worker.setCryptoOrder(newSymbol, price)
 }
@@ -28,11 +28,11 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 		Price:    price * 1.5,
 	}
 
-	cmn.LogInfo.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
+	log.Info.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
 
 	_, err := worker.gateioConn.SetOrder(parameters)
 	if err != nil {
-		cmn.LogError.Print(err.Error())
+		log.Error.Print(err.Error())
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 		return 0
 	}
@@ -44,7 +44,7 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, float64) {
 	buyPair := worker.selectBuyPair(newTradingPair)
 	if buyPair.IsEmpty() {
-		cmn.LogError.Print("New trading pair are missing because suitable buy pair for it not found.")
+		log.Error.Print("New trading pair are missing because suitable buy pair for it not found.")
 		return symbol.Assets{}, 0
 	}
 
@@ -65,7 +65,7 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, f
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
-		cmn.LogError.Print(err)
+		log.Error.Print(err)
 		return symbol.Assets{}, 0
 	}
 
@@ -92,7 +92,7 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 	quantity, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
-		cmn.LogError.Print(err)
+		log.Error.Print(err)
 		return 0
 	}
 
@@ -103,7 +103,7 @@ func (worker *Worker) selectBuyPair(newTradingPair symbol.Assets) symbol.Assets 
 	allExchangeSymbols := worker.binanceConn.GetSymbolsList()
 	if allExchangeSymbols == nil ||
 		len(allExchangeSymbols) == 0 {
-		cmn.LogError.Print("Symbols list for exchange is empty.")
+		log.Error.Print("Symbols list for exchange is empty.")
 		return symbol.Assets{}
 	}
 

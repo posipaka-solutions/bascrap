@@ -6,9 +6,9 @@ import (
 	"github.com/posipaka-trade/bascrap/internal/announcement/analyzer"
 	"github.com/posipaka-trade/bascrap/internal/scraper"
 	"github.com/posipaka-trade/bascrap/internal/telegram"
-	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
+	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 	"github.com/zelenin/go-tdlib/client"
 	"strings"
 	"sync"
@@ -43,7 +43,7 @@ func (worker *Worker) StartMonitoring() {
 
 	limits, err := worker.binanceConn.GetSymbolsLimits()
 	if err != nil {
-		cmn.LogInfo.Print("Failed to get symbols limits from Binance")
+		log.Info.Print("Failed to get symbols limits from Binance")
 	}
 	worker.binanceConn.StoreSymbolsLimits(limits)
 
@@ -56,7 +56,7 @@ func (worker *Worker) StartMonitoring() {
 	go worker.monitorController(worker.tdClient)
 
 	monitoringInfo := "Monitoring started."
-	cmn.LogInfo.Print(monitoringInfo)
+	log.Info.Print(monitoringInfo)
 	telegram.SendMessageToChannel(monitoringInfo, worker.tdClient)
 }
 
@@ -69,19 +69,19 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 		announcedDetails, err := handler.GetLatestAnnounce()
 		if err != nil {
 			if _, isOkay := err.(*scraper.NoNewsUpdate); !isOkay {
-				cmn.LogError.Print(err.Error())
+				log.Error.Print(err.Error())
 			}
 			continue
 		}
 
-		cmn.LogInfo.Print("New announcement on Binance.")
+		log.Info.Print("New announcement on Binance.")
 		worker.processAnnouncement(announcedDetails)
 
 		worker.sendTelegramNotifications()
 
 		limits, err := worker.binanceConn.GetSymbolsLimits()
 		if err != nil {
-			cmn.LogInfo.Print("Failed to get symbols limits from Binance")
+			log.Info.Print("Failed to get symbols limits from Binance")
 		}
 
 		worker.binanceConn.StoreSymbolsLimits(limits)
@@ -92,11 +92,11 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 	symbolAssets, announcedType := analyzer.AnnouncementSymbol(announcedDetails)
 	switch announcedType {
 	case announcement.Unknown:
-		cmn.LogWarning.Print("This new announcement is unuseful for Bascrap")
+		log.Warning.Print("This new announcement is unuseful for Bascrap")
 		break
 	case announcement.NewCrypto:
 		if symbolAssets.IsEmpty() {
-			cmn.LogWarning.Print("New crypto did not get form latest announcement header. -- " +
+			log.Warning.Print("New crypto did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
 			if strings.Contains(announcedDetails.Link, "Innovation Zone") {
@@ -109,7 +109,7 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 		break
 	case announcement.NewTradingPair:
 		if symbolAssets.IsEmpty() {
-			cmn.LogWarning.Print("New trading pair did not get form latest announcement header. -- " +
+			log.Warning.Print("New trading pair did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
 			worker.processTradingPairAnnouncement(symbolAssets)
@@ -120,30 +120,30 @@ func (worker *Worker) processAnnouncement(announcedDetails announcement.Details)
 
 func (worker *Worker) processCryptoAnnouncement(symbolAssets symbol.Assets) {
 	announcementInfo := fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote)
-	cmn.LogInfo.Printf(announcementInfo)
+	log.Info.Printf(announcementInfo)
 	worker.notificationsQueue = append(worker.notificationsQueue, announcementInfo)
 	quantity := worker.buyNewCrypto(symbolAssets)
 	if quantity != 0 {
 		cryptoInfo := fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f",
 			symbolAssets.Base, quantity)
-		cmn.LogInfo.Printf(cryptoInfo)
+		log.Info.Printf(cryptoInfo)
 		worker.notificationsQueue = append(worker.notificationsQueue, cryptoInfo)
 	} else {
-		cmn.LogWarning.Print("New crypto buying failed.")
+		log.Warning.Print("New crypto buying failed.")
 	}
 }
 
 func (worker *Worker) processTradingPairAnnouncement(symbolAssets symbol.Assets) {
 	announcementInfo := fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote)
-	cmn.LogInfo.Printf(announcementInfo)
+	log.Info.Printf(announcementInfo)
 	worker.notificationsQueue = append(worker.notificationsQueue, announcementInfo)
 	buyPair, quantity := worker.buyNewFiat(symbolAssets)
 	if !buyPair.IsEmpty() && quantity != 0 {
 		fiatInfo := fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", buyPair.Base, buyPair.Quote, quantity)
-		cmn.LogInfo.Printf(fiatInfo)
+		log.Info.Printf(fiatInfo)
 		worker.notificationsQueue = append(worker.notificationsQueue, fiatInfo)
 	} else {
-		cmn.LogWarning.Print("New fiat buy failed.")
+		log.Warning.Print("New fiat buy failed.")
 	}
 }
 

@@ -3,10 +3,10 @@ package worker
 import (
 	"errors"
 	"github.com/golang/mock/gomock"
-	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	mockexchangeapi "github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/mock"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
+	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 	"testing"
 )
 
@@ -14,7 +14,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	cmn.InitLoggers("")
+	log.Init("", true)
 
 	t.Run("PurchaseWithoutMoneyTransfer", func(t *testing.T) {
 		exchange := mockexchangeapi.NewMockApiConnector(ctrl)
@@ -214,7 +214,7 @@ func TestNewCryptoBuy(t *testing.T) {
 
 	price := 69.69
 	initialFunds := 22.8
-	cmn.InitLoggers("")
+	log.Init("", true)
 	gateMock := mockexchangeapi.NewMockApiConnector(ctrl)
 	gateMock.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 	gateMock.EXPECT().SetOrder(gomock.Any()).Return(initialFunds/(price*1.05), nil)

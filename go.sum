@@ -14,6 +14,8 @@ github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210913150756-1cb5f18c5acb/
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210913153209-4e8b4a5b7216/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210916083123-2ae82ae7a537 h1:YBrWn6wEB/YDhi8J0y0jLlkzoQ/hEpc7r2pffjr/QpA=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210916083123-2ae82ae7a537/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
+github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210928113529-be93df2db797 h1:KmdhTToxSsTbZyF7bEaLGNlza1Y/eBOheNe4xDxQ4j0=
+github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210928113529-be93df2db797/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/zelenin/go-tdlib v0.4.1 h1:qR50lonl+2tFJ/NWHtEhnFS0PLQwJUeXuUVPVqfKzBw=
 github.com/zelenin/go-tdlib v0.4.1/go.mod h1:Xs8fXbk5n7VaPyrSs9DP7QYoBScWYsjX+lUcWmx1DIU=

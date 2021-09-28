@@ -5,14 +5,21 @@ import (
 	"github.com/posipaka-trade/bascrap/worker"
 	"github.com/posipaka-trade/binance-api-go/pkg/binance"
 	"github.com/posipaka-trade/gate-api-go/pkg/gate"
-	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
+	"github.com/posipaka-trade/posipaka-trade-cmn/log"
+	"os"
 )
 
 const configPath = "./configs/bascrap.toml"
 
+// console run parameters
+// -C - write output to console
 func main() {
-	cmn.InitLoggers("bascrap")
-	cmn.LogInfo.Print("Bascrap execution started.")
+	writeToConsole := false
+	if len(os.Args) >= 2 && os.Args[1] == "-C" {
+		writeToConsole = true
+	}
+	log.Init("bascrap", writeToConsole)
+	log.Info.Print("Bascrap execution started.")
 
 	binanceApiKey, err := cfg.ApiCredentials(configPath, cfg.BinanceEx)
 	if err != nil {
@@ -32,5 +39,5 @@ func main() {
 	w := worker.New(binance.New(binanceApiKey), gate.New(gateioApiKey), initialFunds)
 	w.StartMonitoring()
 	w.Wg.Wait()
-	cmn.LogInfo.Print("Bascrap execution finished.")
+	log.Info.Print("Bascrap execution finished.")
 }
