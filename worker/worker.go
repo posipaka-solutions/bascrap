@@ -124,11 +124,12 @@ func (worker *Worker) processCryptoAnnouncement(symbolAssets symbol.Assets) {
 		fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote))
 	log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 
-	quantity := worker.buyNewCrypto(symbolAssets)
-	if quantity != 0 {
+	hagglingParams, err := worker.buyNewCrypto(symbolAssets)
+	if err != nil {
 		worker.notificationsQueue = append(worker.notificationsQueue,
-			fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f", symbolAssets.Base, quantity))
+			fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f", symbolAssets.Base, hagglingParams.boughtQuantity))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
+		worker.sellCrypto(&hagglingParams)
 	} else {
 		worker.notificationsQueue = append(worker.notificationsQueue, "New crypto buying failed.")
 		log.Warning.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
@@ -140,12 +141,13 @@ func (worker *Worker) processTradingPairAnnouncement(symbolAssets symbol.Assets)
 		fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote))
 	log.Info.Printf(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 
-	buyPair, quantity := worker.buyNewFiat(symbolAssets)
-	if !buyPair.IsEmpty() && quantity != 0 {
+	hagglingParams := worker.buyNewFiat(symbolAssets)
+	if !hagglingParams.symbol.IsEmpty() && hagglingParams.boughtQuantity != 0 {
 		worker.notificationsQueue = append(worker.notificationsQueue,
-			fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", buyPair.Base,
-				buyPair.Quote, quantity))
+			fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", hagglingParams.symbol.Base,
+				hagglingParams.symbol.Quote, hagglingParams.boughtQuantity))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
+		worker.sellCrypto(&hagglingParams)
 	} else {
 		worker.notificationsQueue = append(worker.notificationsQueue, "New fiat buy failed.")
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])

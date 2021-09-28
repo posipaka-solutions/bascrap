@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"github.com/posipaka-trade/bascrap/internal/announcement"
 	"github.com/posipaka-trade/bascrap/internal/assets"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
@@ -8,15 +9,21 @@ import (
 )
 
 // buyNewCrypto returns bought quantity of base
-func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) float64 {
+func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) (hagglingParameters, error) {
 	price, err := worker.gateioConn.GetCurrentPrice(newSymbol)
 	if err != nil {
 		log.Error.Print(err.Error())
-		return 0
+		return hagglingParameters{}, nil
 	}
 	log.Info.Printf("Price for %s%s at gate.io -> %f", newSymbol.Base, newSymbol.Quote, price)
 
-	return worker.setCryptoOrder(newSymbol, price)
+	hagglingParams := hagglingParameters{
+		announcementType: announcement.NewCrypto,
+		boughtPrice:      price,
+		symbol:           newSymbol,
+	}
+	hagglingParams.boughtQuantity = worker.setCryptoOrder(newSymbol, price)
+	return hagglingParams, nil
 }
 
 func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) float64 {
@@ -40,17 +47,17 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 }
 
 // buyNewFiat perform buy of base asset of new fiat pair. Returns symbol and quantity of buy transactions
-func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, float64) {
+func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameters {
 	buyPair := worker.selectBuyPair(newTradingPair)
 	if buyPair.IsEmpty() {
 		log.Error.Print("New trading pair are missing because suitable buy pair for it not found.")
-		return symbol.Assets{}, 0
+		return hagglingParameters{}
 	}
 
 	if buyPair.Quote != assets.Busd {
 		newQuoteQuantity := worker.transferFunds(buyPair)
 		if newQuoteQuantity == 0 {
-			return symbol.Assets{}, 0
+			return hagglingParameters{}
 		}
 		worker.initialFunds = newQuoteQuantity
 	}
@@ -65,10 +72,22 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) (symbol.Assets, f
 	if err != nil {
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 		log.Error.Print(err)
-		return symbol.Assets{}, 0
+		return hagglingParameters{}
 	}
 
-	return buyPair, quantity
+	price, err := worker.binanceConn.GetCurrentPrice(buyPair)
+	if err != nil {
+		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
+		log.Error.Print(err)
+		return hagglingParameters{}
+	}
+
+	return hagglingParameters{
+		announcementType: announcement.NewTradingPair,
+		boughtPrice:      price,
+		boughtQuantity:   quantity,
+		symbol:           buyPair,
+	}
 }
 
 func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
