@@ -102,6 +102,7 @@ func (worker *Worker) processAnnouncement(announcedDetails *announcement.Details
 			if strings.Contains(announcedDetails.Link, "Innovation Zone") {
 				worker.notificationsQueue = append(worker.notificationsQueue,
 					fmt.Sprintf("New crypto %s appears in the Innovation Zone", symbolAssets.Base))
+				log.Info.Print(len(worker.notificationsQueue) - 1)
 				return
 			}
 			worker.processCryptoAnnouncement(symbolAssets)
