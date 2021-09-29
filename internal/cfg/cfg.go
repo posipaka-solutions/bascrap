@@ -6,8 +6,8 @@ package cfg
 import (
 	"errors"
 	"github.com/pelletier/go-toml"
-	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
+	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 )
 
 const (
@@ -24,7 +24,7 @@ func ApiCredentials(cfgPath, exchange string) (exchangeapi.ApiKey, error) {
 
 	apiKey := tml.Get(exchange + "_api_cred.key")
 	if apiKey == nil {
-		cmn.LogError.Print("[cfg] Api key for ", exchange, " exchange was not recognized.")
+		log.Error.Print("[cfg] Api key for ", exchange, " exchange was not recognized.")
 		return exchangeapi.ApiKey{}, errors.New("[cfg] Api key for " + exchange + " exchanged was not recognized")
 	}
 

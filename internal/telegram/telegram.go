@@ -1,7 +1,7 @@
 package telegram
 
 import (
-	cmn "github.com/posipaka-trade/posipaka-trade-cmn"
+	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 	"github.com/zelenin/go-tdlib/client"
 	"path/filepath"
 )
@@ -27,7 +27,7 @@ func SendMessageToChannel(message string, tdlibClient *client.Client) {
 	}
 	_, err := tdlibClient.SendMessage(&messageReq)
 	if err != nil {
-		cmn.LogInfo.Print("Failed in sending message to channel")
+		log.Info.Print("Failed in sending message to channel")
 	}
 }
 
@@ -55,7 +55,7 @@ func NewTDLibClient() *client.Client {
 
 	tdlibClient, err := client.NewClient(authorizer, logVerbosity)
 	if err != nil {
-		cmn.LogError.Print("TDLib client creation failed. Error: ", err.Error())
+		log.Error.Print("TDLib client creation failed. Error: ", err.Error())
 		return nil
 	}
 
@@ -65,7 +65,7 @@ func NewTDLibClient() *client.Client {
 		Limit:        10,
 	})
 	if err != nil {
-		cmn.LogError.Print("Chat list request failed. Error: ", err.Error())
+		log.Error.Print("Chat list request failed. Error: ", err.Error())
 		return nil
 	}
 
