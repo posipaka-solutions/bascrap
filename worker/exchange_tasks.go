@@ -24,11 +24,14 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) (hagglingParameters,
 		boughtPrice:      price,
 		symbol:           newSymbol,
 	}
-	hagglingParams.boughtQuantity = worker.setCryptoOrder(newSymbol, price)
+	hagglingParams.boughtQuantity, err = worker.setCryptoOrder(newSymbol, price)
+	if err != nil {
+		return hagglingParameters{}, err
+	}
 	return hagglingParams, nil
 }
 
-func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) float64 {
+func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) (float64, error) {
 	parameters := order.Parameters{
 		Assets:   newSymbol,
 		Side:     order.Buy,
@@ -40,12 +43,10 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) flo
 	_, err := worker.gateioConn.SetOrder(parameters)
 	log.Info.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
 	if err != nil {
-		log.Error.Print(err.Error())
-		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
-		return 0
+		return 0, err
 	}
 
-	return worker.initialFunds / (price * 1.05)
+	return worker.initialFunds / (price * 1.05), nil
 }
 
 // buyNewFiat perform buy of base asset of new fiat pair. Returns symbol and quantity of buy transactions
