@@ -4,10 +4,11 @@ github.com/pelletier/go-toml v1.9.4 h1:tjENF6MfZAg8e4ZmZTeWaWiT2vXtsoO6+iuOjFhEC
 github.com/pelletier/go-toml v1.9.4/go.mod h1:u1nR/EPcESfeI/szUZKdtJ0xRNbUoANCkoOuaOx1Y+c=
 github.com/posipaka-trade/binance-api-go v0.0.0-20210928234035-4a9274a6855c h1:fbNEQfqY55ljyjFmxbtpDL/hoKuUgnLpNbqijc3+Hz4=
 github.com/posipaka-trade/binance-api-go v0.0.0-20210928234035-4a9274a6855c/go.mod h1:ZFxhaAqad4zav9voldWxq/xx4jMD4k6f+bfVdo8gJp4=
-github.com/posipaka-trade/gate-api-go v0.0.0-20210928234250-489de098ad4d h1:e0fZKvKqEfzNtK4v0ZsVAGkBIaY/4s/VsBH4JpR5fg4=
-github.com/posipaka-trade/gate-api-go v0.0.0-20210928234250-489de098ad4d/go.mod h1:wd0xfq8zKehNHXi80SyItV/hhYqIGcmo2brpsMldZzE=
-github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210928115227-95f3dd35a762 h1:t2KrNA02NMn7gOTwZKAhwc6DOrW0CZ4r819ntA08i4g=
+github.com/posipaka-trade/gate-api-go v0.0.0-20211005222419-233a6d77b21f h1:jyVszCMlJh7yAYMvsiJx4Ym/LV7bqBdkzrchTrO3HQc=
+github.com/posipaka-trade/gate-api-go v0.0.0-20211005222419-233a6d77b21f/go.mod h1:AU1ZcQPzldVjG4UQJtRMowx5uinJcXXzlL4cqgHGQ0w=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20210928115227-95f3dd35a762/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
+github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20211004225033-b2e77962f3e2 h1:CqRhmXzb2aemi8n75nuTtozwOJOftQMbYUHD4skGs1Y=
+github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20211004225033-b2e77962f3e2/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/zelenin/go-tdlib v0.4.1 h1:qR50lonl+2tFJ/NWHtEhnFS0PLQwJUeXuUVPVqfKzBw=
 github.com/zelenin/go-tdlib v0.4.1/go.mod h1:Xs8fXbk5n7VaPyrSs9DP7QYoBScWYsjX+lUcWmx1DIU=
