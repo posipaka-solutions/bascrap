@@ -2,13 +2,17 @@ package worker
 
 import (
 	"github.com/posipaka-trade/bascrap/internal/announcement"
+	"github.com/posipaka-trade/bascrap/internal/assets"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
 	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 )
 
-const cryptoGrowthPercent = 1.12
-const tradingPairGrowthPercent = 1.05
+const (
+	cryptoGrowthPercent   = 1.12
+	usdtPairGrowthPercent = 1.05
+	busdPairGrowthPercent = 1.10
+)
 
 type hagglingParameters struct {
 	announcementType            announcement.Type
@@ -21,13 +25,13 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 	log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 
 	orderParameters := order.Parameters{
-		Assets:   parameters.symbol,
-		Side:     order.Sell,
-		Type:     order.Limit,
-		Quantity: parameters.boughtQuantity,
+		Assets: parameters.symbol,
+		Side:   order.Sell,
+		Type:   order.Limit,
 	}
 
 	if parameters.announcementType == announcement.NewCrypto {
+		orderParameters.Quantity = parameters.boughtQuantity
 		orderParameters.Price = parameters.boughtPrice * cryptoGrowthPercent
 		_, err := worker.gateioConn.SetOrder(orderParameters)
 		if err != nil {
@@ -35,8 +39,21 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 			log.Error.Print(err)
 		}
 	} else if parameters.announcementType == announcement.NewTradingPair {
-		orderParameters.Price = parameters.boughtPrice * tradingPairGrowthPercent
-		_, err := worker.binanceConn.SetOrder(orderParameters)
+		quantity, err := worker.binanceConn.GetAssetBalance(orderParameters.Assets.Base)
+		if err != nil {
+			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
+			log.Error.Print(err)
+		}
+
+		orderParameters.Quantity = quantity
+
+		if orderParameters.Assets.Quote == assets.Busd {
+			orderParameters.Price = parameters.boughtPrice * usdtPairGrowthPercent
+		} else {
+			orderParameters.Price = parameters.boughtPrice * busdPairGrowthPercent
+		}
+
+		_, err = worker.binanceConn.SetOrder(orderParameters)
 		if err != nil {
 			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 			log.Error.Print(err)
