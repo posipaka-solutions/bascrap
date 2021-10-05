@@ -2,6 +2,7 @@ package worker
 
 import (
 	"github.com/posipaka-trade/bascrap/internal/announcement"
+	"github.com/posipaka-trade/bascrap/internal/assets"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
 	"github.com/posipaka-trade/posipaka-trade-cmn/log"
@@ -11,7 +12,6 @@ const (
 	cryptoGrowthPercent   = 1.12
 	usdtPairGrowthPercent = 1.05
 	busdPairGrowthPercent = 1.10
-	busd                  = "BUSD"
 )
 
 type hagglingParameters struct {
@@ -47,7 +47,7 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 
 		orderParameters.Quantity = quantity
 
-		if orderParameters.Assets.Quote == busd {
+		if orderParameters.Assets.Quote == assets.Busd {
 			orderParameters.Price = parameters.boughtPrice * usdtPairGrowthPercent
 		} else {
 			orderParameters.Price = parameters.boughtPrice * busdPairGrowthPercent
