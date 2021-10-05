@@ -11,7 +11,7 @@ const (
 	//binanceChannelId = -1001146915409
 	//binanceChannelId    = -1001390705243 // testChannel
 	//binanceChannelId = -1001501948186 //Oleg
-	madNewsChannelId = -1001501948186 //-1001219306781
+	madNewsChannelId = -1001219306781
 )
 
 type ScrapHandler struct {
