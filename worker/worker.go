@@ -130,7 +130,7 @@ func (worker *Worker) processCryptoAnnouncement(symbolAssets symbol.Assets) {
 		log.Warning.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 	} else {
 		worker.notificationsQueue = append(worker.notificationsQueue,
-			fmt.Sprintf("Bascrap bought new crypto %s at gate.io. Bought quantity %f", symbolAssets.Base, hagglingParams.boughtQuantity))
+			fmt.Sprintf("Bascrap bought new crypto %s at gate.io.\nBought quantity -> %f.\nPrice -> %f", symbolAssets.Base, hagglingParams.boughtQuantity, hagglingParams.boughtPrice))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 		worker.sellCrypto(&hagglingParams)
 	}
@@ -144,8 +144,8 @@ func (worker *Worker) processTradingPairAnnouncement(symbolAssets symbol.Assets)
 	hagglingParams := worker.buyNewFiat(symbolAssets)
 	if !hagglingParams.symbol.IsEmpty() && hagglingParams.boughtQuantity != 0 {
 		worker.notificationsQueue = append(worker.notificationsQueue,
-			fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement. Bought quantity %f", hagglingParams.symbol.Base,
-				hagglingParams.symbol.Quote, hagglingParams.boughtQuantity))
+			fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement.\nBought quantity -> %f.\nPrice -> %f", hagglingParams.symbol.Base,
+				hagglingParams.symbol.Quote, hagglingParams.boughtQuantity, hagglingParams.boughtPrice))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 		worker.sellCrypto(&hagglingParams)
 	} else {

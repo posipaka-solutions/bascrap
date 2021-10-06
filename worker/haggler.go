@@ -1,6 +1,7 @@
 package worker
 
 import (
+	"fmt"
 	"github.com/posipaka-trade/bascrap/internal/announcement"
 	"github.com/posipaka-trade/bascrap/internal/assets"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
@@ -62,4 +63,6 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 			log.Error.Print(err)
 		}
 	}
+	worker.notificationsQueue = append(worker.notificationsQueue, fmt.Sprintf("Profit order was placed at the price -> %f", orderParameters.Price))
+	log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 }

@@ -1,7 +1,6 @@
 package worker
 
 import (
-	"fmt"
 	"github.com/posipaka-trade/bascrap/internal/announcement"
 	"github.com/posipaka-trade/bascrap/internal/assets"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
@@ -15,9 +14,6 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) (hagglingParameters,
 	if err != nil {
 		return hagglingParameters{}, err
 	}
-	worker.notificationsQueue = append(worker.notificationsQueue,
-		fmt.Sprintf("Price for %s%s at gate.io -> %f", newSymbol.Base, newSymbol.Quote, price))
-	log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 
 	hagglingParams := hagglingParameters{
 		announcementType: announcement.NewCrypto,
