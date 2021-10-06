@@ -29,9 +29,9 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 		Side:   order.Sell,
 		Type:   order.Limit,
 	}
+	var err error
 
 	if parameters.announcementType == announcement.NewCrypto {
-		var err error
 		orderParameters.Quantity, err = worker.gateioConn.GetAssetBalance(orderParameters.Assets.Base)
 		if err != nil {
 			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
@@ -44,13 +44,11 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 			log.Error.Print(err)
 		}
 	} else if parameters.announcementType == announcement.NewTradingPair {
-		quantity, err := worker.binanceConn.GetAssetBalance(orderParameters.Assets.Base)
+		orderParameters.Quantity, err = worker.binanceConn.GetAssetBalance(orderParameters.Assets.Base)
 		if err != nil {
 			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 			log.Error.Print(err)
 		}
-
-		orderParameters.Quantity = quantity
 
 		if orderParameters.Assets.Quote == assets.Busd {
 			orderParameters.Price = parameters.boughtPrice * usdtPairGrowthPercent
