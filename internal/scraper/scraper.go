@@ -66,7 +66,7 @@ func parseMadNewsMessage(message *client.Message) (announcement.Details, error) 
 		return announcement.Details{}, errors.New("[scraper] -> Casting of text message failed")
 	}
 	messageText = content.Text.Text
-	messageText = messageText[:strings.Index(messageText, "\n")-1]
+	messageText = messageText[:strings.Index(messageText, "\n")]
 
 	announcedDetails := announcement.Details{Header: messageText}
 

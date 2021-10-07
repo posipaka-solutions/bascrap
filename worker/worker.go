@@ -126,7 +126,7 @@ func (worker *Worker) processCryptoAnnouncement(symbolAssets symbol.Assets) {
 
 	hagglingParams, err := worker.buyNewCrypto(symbolAssets)
 	if err != nil {
-		worker.notificationsQueue = append(worker.notificationsQueue, "New crypto buying failed."+err.Error())
+		worker.notificationsQueue = append(worker.notificationsQueue, "New crypto buying failed.\n"+err.Error())
 		log.Warning.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 	} else {
 		worker.notificationsQueue = append(worker.notificationsQueue,
