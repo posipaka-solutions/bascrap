@@ -10,7 +10,6 @@ import (
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
 	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 	"github.com/zelenin/go-tdlib/client"
-	"strings"
 	"sync"
 	"time"
 )
@@ -99,12 +98,12 @@ func (worker *Worker) processAnnouncement(announcedDetails *announcement.Details
 			log.Warning.Print("New crypto did not get form latest announcement header. -- " +
 				announcedDetails.Header)
 		} else {
-			if strings.Contains(announcedDetails.Header, "Innovation Zone") {
-				worker.notificationsQueue = append(worker.notificationsQueue,
-					fmt.Sprintf("New crypto %s appears in the Innovation Zone", symbolAssets.Base))
-				log.Info.Print(len(worker.notificationsQueue) - 1)
-				return
-			}
+			//if strings.Contains(announcedDetails.Header, "Innovation Zone") {
+			//	worker.notificationsQueue = append(worker.notificationsQueue,
+			//		fmt.Sprintf("New crypto %s appears in the Innovation Zone", symbolAssets.Base))
+			//	log.Info.Print(len(worker.notificationsQueue) - 1)
+			//	return
+			//}
 			worker.processCryptoAnnouncement(symbolAssets)
 		}
 		break

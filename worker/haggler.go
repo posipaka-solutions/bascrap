@@ -11,8 +11,8 @@ import (
 
 const (
 	cryptoGrowthPercent   = 1.12
-	usdtPairGrowthPercent = 1.05
-	busdPairGrowthPercent = 1.10
+	usdtPairGrowthPercent = 1.10
+	busdPairGrowthPercent = 1.05
 )
 
 type hagglingParameters struct {
@@ -31,6 +31,7 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 		Type:   order.Limit,
 	}
 	var err error
+	var result float64
 
 	if parameters.announcementType == announcement.NewCrypto {
 		orderParameters.Quantity, err = worker.gateioConn.GetAssetBalance(orderParameters.Assets.Base)
@@ -39,7 +40,7 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 			log.Error.Print(err)
 		}
 		orderParameters.Price = parameters.boughtPrice * cryptoGrowthPercent
-		_, err = worker.gateioConn.SetOrder(orderParameters)
+		result, err = worker.gateioConn.SetOrder(orderParameters)
 		if err != nil {
 			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 			log.Error.Print(err)
@@ -57,12 +58,14 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 			orderParameters.Price = parameters.boughtPrice * busdPairGrowthPercent
 		}
 
-		_, err = worker.binanceConn.SetOrder(orderParameters)
+		result, err = worker.binanceConn.SetOrder(orderParameters)
 		if err != nil {
 			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 			log.Error.Print(err)
 		}
 	}
-	worker.notificationsQueue = append(worker.notificationsQueue, fmt.Sprintf("Profit order was placed at the price -> %f", orderParameters.Price))
-	log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
+	if result > 0 {
+		worker.notificationsQueue = append(worker.notificationsQueue, fmt.Sprintf("Profit order was placed at the price -> %f", orderParameters.Price))
+		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
+	}
 }
