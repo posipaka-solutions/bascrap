@@ -13,7 +13,7 @@ import (
 func TestNewFiatAnnouncementBuy(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
+	var haglgler hagglingParameters
 	log.Init("", true)
 
 	t.Run("PurchaseWithoutMoneyTransfer", func(t *testing.T) {
@@ -22,9 +22,9 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 			{"KMA", "EUR"}, {"KMA", "BUSD"},
 			{"BTC", "EUR"}, {"KMA", "BTC"},
 		})
-
 		initialFunds := 22.8
 		newSymbolQuantity := 3.14
+		price := initialFunds/newSymbolQuantity
 		newSymbol := symbol.Assets{
 			Base:  "KMA",
 			Quote: "USDT",
@@ -45,16 +45,17 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 			}
 			return newSymbolQuantity, nil
 		})
+		exchange.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 
 		worker := New(exchange, nil, initialFunds)
-		symb, quantity := worker.buyNewFiat(newSymbol)
+		haglgler = worker.buyNewFiat(newSymbol)
 
-		if symb.IsEmpty() {
+		if haglgler.symbol.IsEmpty() {
 			t.Errorf("New fiat bought symbol is empty. Expected: %s%s", newSymbol.Base, newSymbol.Quote)
 			return
 		}
 
-		if quantity != newSymbolQuantity {
+		if haglgler.boughtQuantity != newSymbolQuantity {
 			t.Errorf("Bought quantity incorrect. Expected: %f", newSymbolQuantity)
 		}
 	})
@@ -68,6 +69,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		initialFunds := 22.8
 		quantityAfterTransfer := 3.14
 		newSymbolQuantity := 5.89
+		price := initialFunds/quantityAfterTransfer
 		newSymbol := symbol.Assets{
 			Base:  "KMA",
 			Quote: "USDT",
@@ -96,16 +98,17 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 
 			}
 		})
+		exchange.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 
 		worker := New(exchange, nil, initialFunds)
-		symb, quantity := worker.buyNewFiat(newSymbol)
+		haglgler = worker.buyNewFiat(newSymbol)
 
-		if symb.IsEmpty() {
+		if haglgler.symbol.IsEmpty() {
 			t.Errorf("New fiat bought symbol is empty. Expected: %s%s", newSymbol.Base, newSymbol.Quote)
 			return
 		}
 
-		if quantity != newSymbolQuantity {
+		if haglgler.boughtQuantity != newSymbolQuantity {
 			t.Errorf("Bought quantity incorrect. Expected: %f", newSymbolQuantity)
 		}
 	})
@@ -119,6 +122,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		initialFunds := 22.8
 		quantityAfterTransfer := 3.14
 		newSymbolQuantity := 5.89
+		price := initialFunds/quantityAfterTransfer
 		newSymbol := symbol.Assets{
 			Base:  "KMA",
 			Quote: "BUSD",
@@ -148,16 +152,17 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 				return 0, errors.New("incorrect order side")
 			}
 		})
+		exchange.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 
 		worker := New(exchange, nil, initialFunds)
-		symb, quantity := worker.buyNewFiat(newSymbol)
+		haglgler= worker.buyNewFiat(newSymbol)
 
-		if symb.IsEmpty() {
+		if haglgler.symbol.IsEmpty() {
 			t.Errorf("New fiat bought symbol is empty. Expected: %s%s", newSymbol.Base, newSymbol.Quote)
 			return
 		}
 
-		if quantity != newSymbolQuantity {
+		if haglgler.boughtQuantity != newSymbolQuantity {
 			t.Errorf("Bought quantity incorrect. Expected: %f", newSymbolQuantity)
 		}
 	})
@@ -167,20 +172,20 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		exchange.EXPECT().GetSymbolsList().Return([]symbol.Assets{
 			{"KMA", "LOC"}, {"BTC", "EUR"},
 		})
-		exchange.EXPECT().SetOrder(gomock.Any()).Times(0)
-
-		worker := New(exchange, nil, 15)
-		symb, quantity := worker.buyNewFiat(symbol.Assets{
+		smb := symbol.Assets{
 			Base:  "KMA",
-			Quote: "BUSD",
-		})
+			Quote: "BUSD"}
 
-		if !symb.IsEmpty() {
-			t.Errorf("Symbol value is not empty. Expected: empty. Actual: %s%s", symb.Base, symb.Quote)
+		exchange.EXPECT().SetOrder(gomock.Any()).Times(0)
+		worker := New(exchange, nil, 15)
+		 haglgler = worker.buyNewFiat(smb)
+
+		if !haglgler.symbol.IsEmpty() {
+			t.Errorf("Symbol value is not empty. Expected: empty. Actual: %s%s", haglgler.symbol.Base, haglgler.symbol.Quote)
 			return
 		}
-		if quantity != 0 {
-			t.Errorf("Quantity value is not zero. Expected: zero. Actual: %f", quantity)
+		if haglgler.boughtQuantity != 0 {
+			t.Errorf("Quantity value is not zero. Expected: zero. Actual: %f", haglgler.boughtQuantity)
 			return
 		}
 	})
@@ -191,41 +196,45 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		exchange.EXPECT().SetOrder(gomock.Any()).Times(0)
 
 		worker := New(exchange, nil, 15)
-		symb, quantity := worker.buyNewFiat(symbol.Assets{
+		 haglgler = worker.buyNewFiat(symbol.Assets{
 			Base:  "KMA",
 			Quote: "BUSD",
 		})
 
-		if !symb.IsEmpty() {
-			t.Errorf("Symbol value is not empty. Expected: empty. Actual: %s%s", symb.Base, symb.Quote)
+		if !haglgler.symbol.IsEmpty() {
+			t.Errorf("Symbol value is not empty. Expected: empty. Actual: %s%s", haglgler.symbol.Base, haglgler.symbol.Quote)
 			return
 		}
 
-		if quantity != 0 {
-			t.Errorf("Quantity value is not zero. Expected: zero. Actual: %f", quantity)
+		if haglgler.boughtQuantity != 0 {
+			t.Errorf("Quantity value is not zero. Expected: zero. Actual: %f", haglgler.boughtQuantity)
 			return
 		}
 	})
 }
 
 func TestNewCryptoBuy(t *testing.T) {
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	price := 69.69
 	initialFunds := 22.8
-	log.Init("", true)
+	log.Init("test_log", true)
 	gateMock := mockexchangeapi.NewMockApiConnector(ctrl)
 	gateMock.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 	gateMock.EXPECT().SetOrder(gomock.Any()).Return(initialFunds/(price*1.05), nil)
 
 	worker := New(nil, gateMock, initialFunds)
-	quantity := worker.buyNewCrypto(symbol.Assets{
+	 hagl,err := worker.buyNewCrypto(symbol.Assets{
 		Base:  "TVK",
 		Quote: "USDT",
 	})
-	if quantity != initialFunds/(price*1.05) {
-		t.Errorf("Incorrect order quantity. Expected: %f. Actual: %f", initialFunds/(price*1.05), quantity)
+	 if err != nil{
+
+	 }
+	if hagl.boughtQuantity != initialFunds/(price*1.05) {
+		t.Errorf("Incorrect order quantity. Expected: %f. Actual: %f", initialFunds/(price*1.05), hagl.boughtQuantity)
 		return
 	}
 }
