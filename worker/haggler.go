@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	cryptoGrowthPercent   = 1.12
+	cryptoGrowthPercent   = 1.20
 	usdtPairGrowthPercent = 1.10
 	busdPairGrowthPercent = 1.05
 )
