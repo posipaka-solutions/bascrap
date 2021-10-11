@@ -7,21 +7,21 @@ import (
 	"strings"
 )
 
-func AnnouncementSymbol(details *announcement.Details) (symbol.Assets, announcement.Type) {
-	if strings.Contains(details.Header, "Binance Will List") {
-		return newCryptoSymbol(details), announcement.NewCrypto
+func AnnouncementSymbol(newsTitle string) (symbol.Assets, announcement.Type) {
+	if strings.Contains(newsTitle, "Binance Will List") {
+		return newCryptoSymbol(newsTitle), announcement.NewCrypto
 	}
 
-	if strings.Contains(details.Header, "Binance Adds") &&
-		!strings.Contains(details.Header, "Isolated Margin") {
-		return newTradingPairSymbol(details), announcement.NewTradingPair
+	if strings.Contains(newsTitle, "Binance Adds") &&
+		!strings.Contains(newsTitle, "Isolated Margin") {
+		return newTradingPairSymbol(newsTitle), announcement.NewTradingPair
 	}
 
 	return symbol.Assets{}, announcement.Unknown
 }
 
-func newCryptoSymbol(details *announcement.Details) symbol.Assets {
-	headerWords := strings.Fields(details.Header)
+func newCryptoSymbol(newsTitle string) symbol.Assets {
+	headerWords := strings.Fields(newsTitle)
 	for _, word := range headerWords {
 		if strings.HasPrefix(word, "(") && strings.HasSuffix(word, ")") {
 			return symbol.Assets{
@@ -34,9 +34,9 @@ func newCryptoSymbol(details *announcement.Details) symbol.Assets {
 	return symbol.Assets{}
 }
 
-func newTradingPairSymbol(details *announcement.Details) symbol.Assets {
+func newTradingPairSymbol(newsTitle string) symbol.Assets {
 	pairsStrList := make([]string, 0)
-	headerWords := strings.Fields(details.Header)
+	headerWords := strings.Fields(newsTitle)
 	for _, word := range headerWords {
 		if strings.Contains(word, "/") {
 			if strings.HasSuffix(word, ",") {

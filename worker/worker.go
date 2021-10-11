@@ -18,19 +18,21 @@ type Worker struct {
 	gateioConn, binanceConn exchangeapi.ApiConnector
 	tdClient                *client.Client
 
-	initialFunds       float64
-	notificationsQueue []string
+	initialFunds             float64
+	notificationsQueue       []string
+	sendTelegramNotification bool
 
 	Wg        sync.WaitGroup
 	isWorking bool
 }
 
-func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64) *Worker {
+func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64, sendTelegramNotification bool) *Worker {
 	worker := &Worker{
-		initialFunds:       funds,
-		gateioConn:         gateioConn,
-		binanceConn:        binanceConn,
-		notificationsQueue: make([]string, 15),
+		initialFunds:             funds,
+		gateioConn:               gateioConn,
+		binanceConn:              binanceConn,
+		notificationsQueue:       make([]string, 15),
+		sendTelegramNotification: sendTelegramNotification,
 	}
 
 	worker.notificationsQueue = worker.notificationsQueue[:0]
@@ -54,18 +56,19 @@ func (worker *Worker) StartMonitoring() {
 	worker.Wg.Add(1)
 	go worker.monitorController(worker.tdClient)
 
-	monitoringInfo := "Monitoring started."
-	log.Info.Print(monitoringInfo)
-	telegram.SendMessageToChannel(monitoringInfo, worker.tdClient)
+	log.Info.Print("Monitoring started.")
+	if worker.sendTelegramNotification {
+		telegram.SendMessageToChannel("Monitoring started.", worker.tdClient)
+	}
 }
 
 func (worker *Worker) monitorController(tclient *client.Client) {
 	defer worker.Wg.Done()
 	handler := scraper.New(tclient)
 	for worker.isWorking {
-		time.Sleep(time.Millisecond)
+		time.Sleep(2 * time.Second)
 
-		announcedDetails, err := handler.GetLatestAnnounce()
+		newsTitle, err := handler.LatestWebsiteNews()
 		if err != nil {
 			if _, isOkay := err.(*scraper.NoNewsUpdate); !isOkay {
 				log.Error.Print(err.Error())
@@ -74,7 +77,7 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 		}
 
 		log.Info.Print("New announcement on Binance.")
-		worker.processAnnouncement(&announcedDetails)
+		worker.processAnnouncement(newsTitle)
 
 		worker.sendTelegramNotifications()
 
@@ -87,8 +90,8 @@ func (worker *Worker) monitorController(tclient *client.Client) {
 	}
 }
 
-func (worker *Worker) processAnnouncement(announcedDetails *announcement.Details) {
-	symbolAssets, announcedType := analyzer.AnnouncementSymbol(announcedDetails)
+func (worker *Worker) processAnnouncement(newsTitle string) {
+	symbolAssets, announcedType := analyzer.AnnouncementSymbol(newsTitle)
 	switch announcedType {
 	case announcement.Unknown:
 		log.Warning.Print("This new announcement is unuseful for Bascrap")
@@ -96,7 +99,7 @@ func (worker *Worker) processAnnouncement(announcedDetails *announcement.Details
 	case announcement.NewCrypto:
 		if symbolAssets.IsEmpty() {
 			log.Warning.Print("New crypto did not get form latest announcement header. -- " +
-				announcedDetails.Header)
+				newsTitle)
 		} else {
 			//if strings.Contains(announcedDetails.Header, "Innovation Zone") {
 			//	worker.notificationsQueue = append(worker.notificationsQueue,
@@ -110,7 +113,7 @@ func (worker *Worker) processAnnouncement(announcedDetails *announcement.Details
 	case announcement.NewTradingPair:
 		if symbolAssets.IsEmpty() {
 			log.Warning.Print("New trading pair did not get form latest announcement header. -- " +
-				announcedDetails.Header)
+				newsTitle)
 		} else {
 			worker.processTradingPairAnnouncement(symbolAssets)
 		}
@@ -154,6 +157,10 @@ func (worker *Worker) processTradingPairAnnouncement(symbolAssets symbol.Assets)
 }
 
 func (worker *Worker) sendTelegramNotifications() {
+	if !worker.sendTelegramNotification {
+		return
+	}
+
 	for i := 0; len(worker.notificationsQueue) > i; i++ {
 		telegram.SendMessageToChannel(worker.notificationsQueue[i], worker.tdClient)
 		time.Sleep(1 * time.Second)

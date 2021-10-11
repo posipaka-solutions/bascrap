@@ -13,11 +13,18 @@ const configPath = "./configs/bascrap.toml"
 
 // console run parameters
 // -C - write output to console
+// --discard-telegram-notification - don`t send telegram notification
 func main() {
 	writeToConsole := false
-	if len(os.Args) >= 2 && os.Args[1] == "-C" {
+	if checkRunFlags("-C") {
 		writeToConsole = true
 	}
+
+	enableTelegramNotification := true
+	if checkRunFlags("--discard-telegram-notification") {
+		enableTelegramNotification = false
+	}
+
 	log.Init("bascrap", writeToConsole)
 	log.Info.Print("Bascrap execution started.")
 
@@ -36,8 +43,18 @@ func main() {
 		panic(err.Error())
 	}
 
-	w := worker.New(binance.New(binanceApiKey), gate.New(gateioApiKey), initialFunds)
+	w := worker.New(binance.New(binanceApiKey), gate.New(gateioApiKey), initialFunds, enableTelegramNotification)
 	w.StartMonitoring()
 	w.Wg.Wait()
 	log.Info.Print("Bascrap execution finished.")
+}
+
+func checkRunFlags(flag string) bool {
+	for i := 1; i < len(os.Args); i++ {
+		if os.Args[i] == flag {
+			return true
+		}
+	}
+
+	return false
 }

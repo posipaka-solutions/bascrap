@@ -6,11 +6,10 @@ import (
 )
 
 func TestAnalyzer(t *testing.T) {
-	announDetail := announcement.Details{}
+	announDetail := ""
 	t.Run("NewCryptoAnnouncement", func(t *testing.T) {
-		announDetail.SourceUrl = announcement.NewCryptoListingUrl
 		t.Run("OnlyOneCrypto", func(t *testing.T) {
-			announDetail.Header = "Binance Will List Gnosis (GNO)"
+			announDetail = "Binance Will List Gnosis (GNO)"
 			announSymbol, announType := AnnouncementSymbol(announDetail)
 			if announType != announcement.NewCrypto {
 				t.Errorf("Incorrect type recognition. Expacted: %s\tActual: %s",
@@ -27,7 +26,7 @@ func TestAnalyzer(t *testing.T) {
 		})
 
 		t.Run("SeveralCrypto", func(t *testing.T) {
-			announDetail.Header = "Binance Will List Alpaca Finance (ALPACA) and Harvest Finance (FARM) in the Innovation Zone"
+			announDetail = "Binance Will List Alpaca Finance (ALPACA) and Harvest Finance (FARM) in the Innovation Zone"
 			announSymbol, announType := AnnouncementSymbol(announDetail)
 			if announType != announcement.NewCrypto {
 				t.Errorf("Incorrect type recognition. Expacted: %s\tActual: %s",
@@ -45,8 +44,7 @@ func TestAnalyzer(t *testing.T) {
 	})
 
 	t.Run("NewTradingPairAnnouncement", func(t *testing.T) {
-		announDetail.SourceUrl = announcement.NewFiatListingUrl
-		announDetail.Header = "Binance Adds AXS/AUD, AXS/USDT & TVK/BUSD Trading Pairs"
+		announDetail = "Binance Adds AXS/AUD, AXS/USDT & TVK/BUSD Trading Pairs"
 		announSymbol, announType := AnnouncementSymbol(announDetail)
 		if announType != announcement.NewTradingPair {
 			t.Errorf("Incorrect announcement type. Expected: %s\tActual: %s",
@@ -60,8 +58,7 @@ func TestAnalyzer(t *testing.T) {
 	})
 
 	t.Run("NewTradingPairOnMarginMarkets", func(t *testing.T) {
-		announDetail.SourceUrl = announcement.NewCryptoListingUrl
-		announDetail.Header = "Binance Adds ALPACA, MINA, QUICK & RAY on Isolated Margin, Trade to Win Interest Free Vouchers and Special Merch"
+		announDetail = "Binance Adds ALPACA, MINA, QUICK & RAY on Isolated Margin, Trade to Win Interest Free Vouchers and Special Merch"
 		_, announType := AnnouncementSymbol(announDetail)
 		if announType != announcement.Unknown {
 			t.Errorf("Incorrect announcement type. Expected: %s\tActual: %s",
@@ -70,8 +67,7 @@ func TestAnalyzer(t *testing.T) {
 	})
 
 	t.Run("NoSuitableTradingPairs", func(t *testing.T) {
-		announDetail.SourceUrl = announcement.NewFiatListingUrl
-		announDetail.Header = "Binance Adds DOGE/BIDR, ETC/BRL, ETC/UAH Trading Pairs"
+		announDetail = "Binance Adds DOGE/BIDR, ETC/BRL, ETC/UAH Trading Pairs"
 		announSymbol, announType := AnnouncementSymbol(announDetail)
 		if announType != announcement.NewTradingPair {
 			t.Errorf("Incorrect announcement type. Expected: %s\tActual: %s",
@@ -85,29 +81,28 @@ func TestAnalyzer(t *testing.T) {
 	})
 
 	t.Run("UnusefulAnnouncement", func(t *testing.T) {
-		announDetail.SourceUrl = announcement.NewCryptoListingUrl
-		announDetail.Header = "FOR, FXS, HNT, KLAY, LPT and PERP Listing on Isolated Margin, $1M Margin 0% Interest Vouchers Giveaway"
+		announDetail = "FOR, FXS, HNT, KLAY, LPT and PERP Listing on Isolated Margin, $1M Margin 0% Interest Vouchers Giveaway"
 		_, announType := AnnouncementSymbol(announDetail)
 		if announType != announcement.Unknown {
 			t.Errorf("Incorrect announcement type. Expected: %s\tActual: %s",
 				announcement.TypeAlias[announcement.Unknown], announcement.TypeAlias[announType])
 		}
 
-		announDetail.Header = "Earn Up to 30% APY on C98 and ARPA with Binance Savings"
+		announDetail = "Earn Up to 30% APY on C98 and ARPA with Binance Savings"
 		_, announType = AnnouncementSymbol(announDetail)
 		if announType != announcement.Unknown {
 			t.Errorf("Incorrect announcement type. Expected: %s\tActual: %s",
 				announcement.TypeAlias[announcement.Unknown], announcement.TypeAlias[announType])
 		}
 
-		announDetail.Header = "Binance Completes Axie Infinity (AXS) & Smooth Love Potion (SLP) Ronin Network Integration"
+		announDetail = "Binance Completes Axie Infinity (AXS) & Smooth Love Potion (SLP) Ronin Network Integration"
 		_, announType = AnnouncementSymbol(announDetail)
 		if announType != announcement.Unknown {
 			t.Errorf("Incorrect announcement type. Expected: %s\tActual: %s",
 				announcement.TypeAlias[announcement.Unknown], announcement.TypeAlias[announType])
 		}
 
-		announDetail.Header = "Introducing Mobox (MBOX) on Binance Launchpool! Farm MBOX by Staking BNB, MBOX and BUSD Tokens"
+		announDetail = "Introducing Mobox (MBOX) on Binance Launchpool! Farm MBOX by Staking BNB, MBOX and BUSD Tokens"
 		_, announType = AnnouncementSymbol(announDetail)
 		if announType != announcement.Unknown {
 			t.Errorf("Incorrect announcement type. Expected: %s\tActual: %s",
