@@ -124,7 +124,7 @@ func (handler *ScrapHandler) requestNewsFromWebsite() ([]map[string]interface{},
 		handler.nextRequestTime = time.Unix(int64(timestamp), 0)
 	}
 
-	if response.StatusCode != 200 {
+	if response.StatusCode/100 != 2 && response.StatusCode/100 != 3 {
 		return nil, errors.New("Mad website http error response: " + response.Status)
 	}
 	defer response.Body.Close()
