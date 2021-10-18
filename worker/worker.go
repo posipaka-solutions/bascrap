@@ -22,6 +22,10 @@ type Worker struct {
 	notificationsQueue       []string
 	sendTelegramNotification bool
 
+	messageMutex        sync.Mutex
+	latestHandleMessage string
+	newAnnouncement     chan string
+
 	Wg        sync.WaitGroup
 	isWorking bool
 }
@@ -33,6 +37,7 @@ func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64, sendTe
 		binanceConn:              binanceConn,
 		notificationsQueue:       make([]string, 15),
 		sendTelegramNotification: sendTelegramNotification,
+		newAnnouncement:          make(chan string),
 	}
 
 	worker.notificationsQueue = worker.notificationsQueue[:0]
@@ -53,8 +58,11 @@ func (worker *Worker) StartMonitoring() {
 		return
 	}
 
-	worker.Wg.Add(1)
-	go worker.monitorController(worker.tdClient)
+	handler := scraper.New(worker.tdClient)
+	worker.Wg.Add(3)
+	go worker.webpageScanner(&handler)
+	go worker.telegramScanner(&handler)
+	go worker.monitorController()
 
 	log.Info.Print("Monitoring started.")
 	if worker.sendTelegramNotification {
@@ -62,23 +70,15 @@ func (worker *Worker) StartMonitoring() {
 	}
 }
 
-func (worker *Worker) monitorController(tclient *client.Client) {
+func (worker *Worker) monitorController() {
 	defer worker.Wg.Done()
-	handler := scraper.New(tclient)
 	for worker.isWorking {
-		time.Sleep(2 * time.Second)
-
-		newsTitle, err := handler.LatestWebsiteNews()
-		if err != nil {
-			if _, isOkay := err.(*scraper.NoNewsUpdate); !isOkay {
-				log.Error.Print(err.Error())
-			}
-			continue
+		newsTitle, isOkay := <-worker.newAnnouncement
+		if !isOkay {
+			break
 		}
 
-		log.Info.Print("New announcement on Binance.")
 		worker.processAnnouncement(newsTitle)
-
 		worker.sendTelegramNotifications()
 
 		limits, err := worker.binanceConn.GetSymbolsLimits()
