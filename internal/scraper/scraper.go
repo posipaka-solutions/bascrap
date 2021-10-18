@@ -3,6 +3,7 @@ package scraper
 import (
 	"encoding/json"
 	"errors"
+	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 	"github.com/zelenin/go-tdlib/client"
 	"io/ioutil"
 	"net/http"
@@ -12,10 +13,8 @@ import (
 )
 
 const (
-	//binanceChannelId = -1001146915409
-	//binanceChannelId    = -1001390705243 // testChannel
-	//binanceChannelId = -1001501948186 //Oleg
-	madNewsChannelId = -1001219306781
+	madNewsChannelId = -1001501948186 //Oleg
+	//madNewsChannelId = -1001219306781
 
 	binanceNewsSource = "Binance EN"
 	newsTitle         = "title"
@@ -40,7 +39,7 @@ func New(tclient *client.Client) ScrapHandler {
 	_, err := handler.LatestTelegramNews()
 	if err != nil {
 		if _, isOkay := err.(*NoNewsUpdate); !isOkay {
-			panic("Initial news request to Mad telegram channel failed: " + err.Error())
+			log.Warning.Print("Initial news request to Mad telegram channel failed: " + err.Error())
 		}
 	}
 
@@ -71,11 +70,17 @@ func (handler *ScrapHandler) LatestTelegramNews() (string, error) {
 		return "", errors.New("[scraper] -> Casting of text message failed")
 	}
 
-	if handler.latestTelegramNews == content.Text.Text[:strings.Index(content.Text.Text, "\n")] {
+	title := content.Text.Text
+	crIdx := strings.Index(title, "\n")
+	if crIdx != -1 {
+		title = title[:crIdx]
+	}
+
+	if !strings.HasPrefix(title, "[Binance]") || handler.latestTelegramNews == title {
 		return "", &NoNewsUpdate{}
 	}
 
-	handler.latestTelegramNews = content.Text.Text[:strings.Index(content.Text.Text, "\n")]
+	handler.latestTelegramNews = title
 	return handler.latestTelegramNews, nil
 }
 
