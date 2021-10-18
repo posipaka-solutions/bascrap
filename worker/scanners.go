@@ -31,7 +31,6 @@ func (worker *Worker) webpageScanner(handler *scraper.ScrapHandler) {
 
 func (worker *Worker) telegramScanner(handler *scraper.ScrapHandler) {
 	defer worker.Wg.Done()
-	time.Sleep(3000 * time.Millisecond)
 	for worker.isWorking {
 		time.Sleep(time.Millisecond)
 
