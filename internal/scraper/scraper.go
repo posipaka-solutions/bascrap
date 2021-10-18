@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	madNewsChannelId = -1001501948186 //Oleg
-	//madNewsChannelId = -1001219306781
+	//madNewsChannelId = -1001501948186 //Oleg
+	madNewsChannelId = -1001219306781
 
 	binanceNewsSource = "Binance EN"
 	newsTitle         = "title"
@@ -71,12 +71,15 @@ func (handler *ScrapHandler) LatestTelegramNews() (string, error) {
 	}
 
 	title := content.Text.Text
-	crIdx := strings.Index(title, "\n")
-	if crIdx != -1 {
+	if crIdx := strings.Index(title, "\n"); crIdx != -1 {
 		title = title[:crIdx]
 	}
 
-	if !strings.HasPrefix(title, "[Binance]") || handler.latestTelegramNews == title {
+	if sourceIdx := strings.Index(title, "] "); sourceIdx != -1 {
+		title = title[sourceIdx+2:]
+	}
+
+	if !strings.HasPrefix(content.Text.Text, "[Binance]") || handler.latestTelegramNews == title {
 		return "", &NoNewsUpdate{}
 	}
 
