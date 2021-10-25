@@ -31,40 +31,34 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 		Type:   order.Limit,
 	}
 	var err error
-	var result float64
+	var orderInfo order.OrderInfo
 
 	if parameters.announcementType == announcement.NewCrypto {
-		orderParameters.Quantity, err = worker.gateioConn.GetAssetBalance(orderParameters.Assets.Base)
-		if err != nil {
-			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
-			log.Error.Print(err)
-		}
+
+		orderParameters.Quantity = parameters.boughtQuantity
 		orderParameters.Price = parameters.boughtPrice * cryptoGrowthPercent
-		result, err = worker.gateioConn.SetOrder(orderParameters)
+
+		orderInfo, err = worker.gateioConn.SetOrder(orderParameters)
 		if err != nil {
 			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 			log.Error.Print(err)
 		}
 	} else if parameters.announcementType == announcement.NewTradingPair {
-		orderParameters.Quantity, err = worker.binanceConn.GetAssetBalance(orderParameters.Assets.Base)
-		if err != nil {
-			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
-			log.Error.Print(err)
-		}
 
+		orderParameters.Quantity = parameters.boughtQuantity
 		if orderParameters.Assets.Quote == assets.Busd {
 			orderParameters.Price = parameters.boughtPrice * usdtPairGrowthPercent
 		} else {
 			orderParameters.Price = parameters.boughtPrice * busdPairGrowthPercent
 		}
 
-		result, err = worker.binanceConn.SetOrder(orderParameters)
+		orderInfo, err = worker.binanceConn.SetOrder(orderParameters)
 		if err != nil {
 			worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 			log.Error.Print(err)
 		}
 	}
-	if result > 0 {
+	if orderInfo.Quantity > 0 {
 		worker.notificationsQueue = append(worker.notificationsQueue, fmt.Sprintf("Profit order was placed at the price -> %f", orderParameters.Price))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 	}

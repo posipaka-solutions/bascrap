@@ -20,29 +20,33 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) (hagglingParameters,
 		boughtPrice:      price,
 		symbol:           newSymbol,
 	}
-	hagglingParams.boughtQuantity, err = worker.setCryptoOrder(newSymbol, price)
+	var orderInfo order.OrderInfo
+	orderInfo, err = worker.setCryptoOrder(newSymbol, price)
 	if err != nil {
 		return hagglingParameters{}, err
 	}
+	hagglingParams.boughtPrice = orderInfo.Price
+	hagglingParams.boughtQuantity = orderInfo.Quantity
 	return hagglingParams, nil
 }
 
-func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) (float64, error) {
+func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) (order.OrderInfo, error) {
 	parameters := order.Parameters{
 		Assets:   newSymbol,
 		Side:     order.Buy,
 		Type:     order.Limit,
-		Quantity: worker.initialFunds / (price * 1.5),
+		Quantity: worker.initialFunds / price,
 		Price:    price * 1.5,
 	}
-
-	_, err := worker.gateioConn.SetOrder(parameters)
+	var orderInfo order.OrderInfo
+	var err error
+	orderInfo, err = worker.gateioConn.SetOrder(parameters)
 	log.Info.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
 	if err != nil {
-		return 0, err
+		return order.OrderInfo{}, err
 	}
 
-	return worker.initialFunds / (price * 1.05), nil
+	return orderInfo, nil
 }
 
 // buyNewFiat perform buy of base asset of new fiat pair. Returns symbol and quantity of buy transactions
@@ -53,8 +57,8 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameter
 		return hagglingParameters{}
 	}
 
-	if buyPair.Quote != assets.Busd {
-		newQuoteQuantity := worker.transferFunds(buyPair)
+	if newTradingPair.Quote != assets.Busd {
+		newQuoteQuantity := worker.transferFunds(newTradingPair)
 		if newQuoteQuantity == 0 {
 			return hagglingParameters{}
 		}
@@ -62,19 +66,14 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameter
 	}
 
 	params := order.Parameters{
-		Assets:   buyPair,
+		Assets:   newTradingPair,
 		Side:     order.Buy,
 		Type:     order.Market,
 		Quantity: worker.initialFunds,
 	}
-	quantity, err := worker.binanceConn.SetOrder(params)
-	if err != nil {
-		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
-		log.Error.Print(err)
-		return hagglingParameters{}
-	}
-
-	price, err := worker.binanceConn.GetCurrentPrice(buyPair)
+	var orderInfo order.OrderInfo
+	var err error
+	orderInfo, err = worker.binanceConn.SetOrder(params)
 	if err != nil {
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 		log.Error.Print(err)
@@ -83,9 +82,9 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameter
 
 	return hagglingParameters{
 		announcementType: announcement.NewTradingPair,
-		boughtPrice:      price,
-		boughtQuantity:   quantity,
-		symbol:           buyPair,
+		boughtPrice:      orderInfo.Price,
+		boughtQuantity:   orderInfo.Quantity,
+		symbol:           newTradingPair,
 	}
 }
 
@@ -105,15 +104,15 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 		params.Assets.Base = assets.Busd
 		params.Assets.Quote = assets.Usdt
 	}
-
-	quantity, err := worker.binanceConn.SetOrder(params)
+	var orderInfo order.OrderInfo
+	orderInfo, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 		log.Error.Print(err)
 		return 0
 	}
 
-	return quantity
+	return orderInfo.Quantity
 }
 
 func (worker *Worker) selectBuyPair(newTradingPair symbol.Assets) symbol.Assets {

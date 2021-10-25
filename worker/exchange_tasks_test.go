@@ -47,7 +47,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		})
 		exchange.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 
-		worker := New(exchange, nil, initialFunds)
+		worker := New(exchange, nil, initialFunds, false)
 		haglgler = worker.buyNewFiat(newSymbol)
 
 		if haglgler.symbol.IsEmpty() {
@@ -100,7 +100,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		})
 		exchange.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 
-		worker := New(exchange, nil, initialFunds)
+		worker := New(exchange, nil, initialFunds, false)
 		haglgler = worker.buyNewFiat(newSymbol)
 
 		if haglgler.symbol.IsEmpty() {
@@ -154,7 +154,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		})
 		exchange.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 
-		worker := New(exchange, nil, initialFunds)
+		worker := New(exchange, nil, initialFunds, false)
 		haglgler = worker.buyNewFiat(newSymbol)
 
 		if haglgler.symbol.IsEmpty() {
@@ -177,7 +177,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 			Quote: "BUSD"}
 
 		exchange.EXPECT().SetOrder(gomock.Any()).Times(0)
-		worker := New(exchange, nil, 15)
+		worker := New(exchange, nil, 15, false)
 		haglgler = worker.buyNewFiat(smb)
 
 		if !haglgler.symbol.IsEmpty() {
@@ -195,7 +195,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		exchange.EXPECT().GetSymbolsList().Return([]symbol.Assets{})
 		exchange.EXPECT().SetOrder(gomock.Any()).Times(0)
 
-		worker := New(exchange, nil, 15)
+		worker := New(exchange, nil, 15, false)
 		haglgler = worker.buyNewFiat(symbol.Assets{
 			Base:  "KMA",
 			Quote: "BUSD",
@@ -225,7 +225,7 @@ func TestNewCryptoBuy(t *testing.T) {
 	gateMock.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 	gateMock.EXPECT().SetOrder(gomock.Any()).Return(initialFunds/(price*1.05), nil)
 
-	worker := New(nil, gateMock, initialFunds)
+	worker := New(nil, gateMock, initialFunds, false)
 	hagl, err := worker.buyNewCrypto(symbol.Assets{
 		Base:  "TVK",
 		Quote: "USDT",

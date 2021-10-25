@@ -107,7 +107,7 @@ func (worker *Worker) processAnnouncement(newsTitle string) {
 			//	log.Info.Print(len(worker.notificationsQueue) - 1)
 			//	return
 			//}
-			worker.processCryptoAnnouncement(symbolAssets)
+			worker.ProcessCryptoAnnouncement(symbolAssets)
 		}
 		break
 	case announcement.NewTradingPair:
@@ -115,13 +115,13 @@ func (worker *Worker) processAnnouncement(newsTitle string) {
 			log.Warning.Print("New trading pair did not get form latest announcement header. -- " +
 				newsTitle)
 		} else {
-			worker.processTradingPairAnnouncement(symbolAssets)
+			worker.ProcessTradingPairAnnouncement(symbolAssets)
 		}
 		break
 	}
 }
 
-func (worker *Worker) processCryptoAnnouncement(symbolAssets symbol.Assets) {
+func (worker *Worker) ProcessCryptoAnnouncement(symbolAssets symbol.Assets) {
 	worker.notificationsQueue = append(worker.notificationsQueue,
 		fmt.Sprintf("%s/%s new crypto pair was announced.", symbolAssets.Base, symbolAssets.Quote))
 	log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
@@ -138,7 +138,13 @@ func (worker *Worker) processCryptoAnnouncement(symbolAssets symbol.Assets) {
 	}
 }
 
-func (worker *Worker) processTradingPairAnnouncement(symbolAssets symbol.Assets) {
+func (worker *Worker) ProcessTradingPairAnnouncement(symbolAssets symbol.Assets) {
+	limits, err := worker.binanceConn.GetSymbolsLimits()
+	if err != nil {
+		log.Info.Print("Failed to get symbols limits from Binance")
+	}
+	worker.binanceConn.StoreSymbolsLimits(limits)
+
 	worker.notificationsQueue = append(worker.notificationsQueue,
 		fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote))
 	log.Info.Printf(worker.notificationsQueue[len(worker.notificationsQueue)-1])
