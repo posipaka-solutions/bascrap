@@ -139,12 +139,6 @@ func (worker *Worker) ProcessCryptoAnnouncement(symbolAssets symbol.Assets) {
 }
 
 func (worker *Worker) ProcessTradingPairAnnouncement(symbolAssets symbol.Assets) {
-	limits, err := worker.binanceConn.GetSymbolsLimits()
-	if err != nil {
-		log.Info.Print("Failed to get symbols limits from Binance")
-	}
-	worker.binanceConn.StoreSymbolsLimits(limits)
-
 	worker.notificationsQueue = append(worker.notificationsQueue,
 		fmt.Sprintf("%s/%s new trading pair was announced.", symbolAssets.Base, symbolAssets.Quote))
 	log.Info.Printf(worker.notificationsQueue[len(worker.notificationsQueue)-1])
