@@ -36,7 +36,7 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) (or
 		Side:     order.Buy,
 		Type:     order.Limit,
 		Quantity: worker.initialFunds / price,
-		Price:    price * 1.5,
+		Price:    price * 1.15,
 	}
 	var orderInfo order.OrderInfo
 	var err error
