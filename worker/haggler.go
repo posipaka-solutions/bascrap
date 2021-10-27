@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	cryptoGrowthPercent   = 1.20
+	cryptoGrowthPercent   = 1.21
 	usdtPairGrowthPercent = 1.10
 	busdPairGrowthPercent = 1.05
 )
@@ -35,7 +35,7 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 
 	if parameters.announcementType == announcement.NewCrypto {
 
-		orderParameters.Quantity = parameters.boughtQuantity
+		orderParameters.Quantity = parameters.boughtQuantity * 0.99
 		orderParameters.Price = parameters.boughtPrice * cryptoGrowthPercent
 
 		orderInfo, err = worker.gateioConn.SetOrder(orderParameters)
