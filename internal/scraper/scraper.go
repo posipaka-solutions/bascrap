@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	//madNewsChannelId = -1001501948186 //Oleg
+	//madNewsChannelId = -1001501948186 //test channel
 	madNewsChannelId = -1001219306781
 
 	binanceNewsSource = "Binance EN"

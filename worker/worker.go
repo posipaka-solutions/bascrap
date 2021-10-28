@@ -146,8 +146,8 @@ func (worker *Worker) ProcessTradingPairAnnouncement(symbolAssets symbol.Assets)
 	hagglingParams := worker.buyNewFiat(symbolAssets)
 	if !hagglingParams.symbol.IsEmpty() && hagglingParams.boughtQuantity != 0 {
 		worker.notificationsQueue = append(worker.notificationsQueue,
-			fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement.\nBought quantity -> %f.\nPrice -> %f", hagglingParams.symbol.Base,
-				hagglingParams.symbol.Quote, hagglingParams.boughtQuantity, hagglingParams.boughtPrice))
+			fmt.Sprintf("Bascrap bought %s using %s after new fiat announcement.\nBought quantity -> %.9f.\nPrice -> %.9f",
+				hagglingParams.symbol.Base, hagglingParams.symbol.Quote, hagglingParams.boughtQuantity, hagglingParams.boughtPrice))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 		worker.sellCrypto(&hagglingParams)
 	} else {

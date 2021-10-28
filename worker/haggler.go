@@ -22,7 +22,7 @@ type hagglingParameters struct {
 }
 
 func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
-	worker.notificationsQueue = append(worker.notificationsQueue, "Setting profit order immediately after announcement")
+	worker.notificationsQueue = append(worker.notificationsQueue, "Setting profit order immediately after announcement.")
 	log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
 
 	orderParameters := order.Parameters{
@@ -30,11 +30,10 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 		Side:   order.Sell,
 		Type:   order.Limit,
 	}
+
 	var err error
 	var orderInfo order.OrderInfo
-
 	if parameters.announcementType == announcement.NewCrypto {
-
 		orderParameters.Quantity = parameters.boughtQuantity * 0.99
 		orderParameters.Price = parameters.boughtPrice * cryptoGrowthPercent
 
@@ -44,8 +43,7 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 			log.Error.Print(err)
 		}
 	} else if parameters.announcementType == announcement.NewTradingPair {
-
-		orderParameters.Quantity = parameters.boughtQuantity
+		orderParameters.Quantity = parameters.boughtQuantity * 0.995
 		if orderParameters.Assets.Quote == assets.Busd {
 			orderParameters.Price = parameters.boughtPrice * usdtPairGrowthPercent
 		} else {
@@ -58,6 +56,7 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 			log.Error.Print(err)
 		}
 	}
+
 	if orderInfo.Quantity > 0 {
 		worker.notificationsQueue = append(worker.notificationsQueue, fmt.Sprintf("Profit order was placed at the price -> %f", orderParameters.Price))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
