@@ -57,8 +57,8 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameter
 		return hagglingParameters{}
 	}
 
-	if newTradingPair.Quote != assets.Busd {
-		newQuoteQuantity := worker.transferFunds(newTradingPair)
+	if buyPair.Quote != assets.Busd {
+		newQuoteQuantity := worker.transferFunds(buyPair)
 		if newQuoteQuantity == 0 {
 			return hagglingParameters{}
 		}
@@ -66,14 +66,14 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameter
 	}
 
 	params := order.Parameters{
-		Assets:   newTradingPair,
+		Assets:   buyPair,
 		Side:     order.Buy,
 		Type:     order.Market,
 		Quantity: worker.initialFunds,
 	}
-	var orderInfo order.OrderInfo
-	var err error
-	orderInfo, err = worker.binanceConn.SetOrder(params)
+
+	log.Info.Printf("Pair %s/%s selected for trading.", buyPair.Base, buyPair.Quote)
+	orderInfo, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
 		log.Error.Print(err)
@@ -84,7 +84,7 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameter
 		announcementType: announcement.NewTradingPair,
 		boughtPrice:      orderInfo.Price,
 		boughtQuantity:   orderInfo.Quantity,
-		symbol:           newTradingPair,
+		symbol:           buyPair,
 	}
 }
 
