@@ -112,7 +112,7 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 		return 0
 	}
 
-	return orderInfo.Quantity
+	return orderInfo.Quantity * 0.995
 }
 
 func (worker *Worker) selectBuyPair(newTradingPair symbol.Assets) symbol.Assets {
