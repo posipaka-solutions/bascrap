@@ -134,7 +134,7 @@ func (worker *Worker) ProcessCryptoAnnouncement(symbolAssets symbol.Assets) {
 		worker.notificationsQueue = append(worker.notificationsQueue,
 			fmt.Sprintf("Bascrap bought new crypto %s at gate.io.\nBought quantity -> %f.\nPrice -> %f", symbolAssets.Base, hagglingParams.boughtQuantity, hagglingParams.boughtPrice))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
-		worker.sellCrypto(&hagglingParams)
+		//worker.sellCrypto(&hagglingParams)
 	}
 }
 
