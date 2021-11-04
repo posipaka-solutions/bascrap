@@ -11,9 +11,11 @@ import (
 	"time"
 )
 
-func (worker *Worker) trackPriceGrowth(annType announcement.Type, announcedAssets symbol.Assets) {
+func (worker *Worker) trackPriceGrowth(announcedAssets symbol.Assets, annType announcement.Type) {
 	var priceList []string
 	switch annType {
+	case announcement.Unknown:
+		return
 	case announcement.NewCrypto:
 		log.Info.Println("Price growth tracker applied to pair ", announcedAssets)
 		priceList = priceGetter(worker.gateioConn, announcedAssets)
@@ -27,8 +29,12 @@ func (worker *Worker) trackPriceGrowth(annType announcement.Type, announcedAsset
 		priceList = priceGetter(worker.binanceConn, operatePair)
 	}
 
-	if storePriceList(priceList, announcedAssets) {
+	if priceList == nil {
+		return
+	}
 
+	if fileName := storePriceList(priceList, announcedAssets); len(fileName) != 0 {
+		log.Info.Print("[PriceTracker] -> Tracked price stored to file ", fileName)
 	}
 }
 
@@ -58,30 +64,30 @@ func priceGetter(exchange exchangeapi.ApiConnector, assets symbol.Assets) []stri
 	return priceList
 }
 
-func storePriceList(priceList []string, assets symbol.Assets) bool {
-	if priceList != nil && len(priceList) != 0 {
-		file, err := os.Create(fmt.Sprintf("./price_tracker/%s%s_%s",
-			assets.Base, assets.Quote, time.Now().Format(time.StampMilli)))
+func storePriceList(priceList []string, assets symbol.Assets) string {
+	fileName := fmt.Sprintf("./price_tracker/%s%s_%s",
+		assets.Base, assets.Quote, time.Now().Format(time.StampMilli))
+
+	file, err := os.Create(fileName)
+	if err != nil {
+		log.Error.Print("[PriceTracker] -> ", err)
+		return ""
+	}
+	defer file.Close()
+
+	for _, line := range priceList {
+		_, err = file.WriteString(line)
 		if err != nil {
 			log.Error.Print("[PriceTracker] -> ", err)
-			return false
-		}
-		defer file.Close()
-
-		for _, line := range priceList {
-			_, err = file.WriteString(line)
-			if err != nil {
-				log.Error.Print("[PriceTracker] -> ", err)
-				return false
-			}
-		}
-		err = file.Sync()
-
-		if err != nil {
-			log.Error.Print("[PriceTracker] -> ", err)
-			return false
+			return ""
 		}
 	}
+	err = file.Sync()
 
-	return true
+	if err != nil {
+		log.Error.Print("[PriceTracker] -> ", err)
+		return ""
+	}
+
+	return fileName
 }

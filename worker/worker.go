@@ -92,6 +92,8 @@ func (worker *Worker) monitorController() {
 
 func (worker *Worker) processAnnouncement(newsTitle string) {
 	symbolAssets, announcedType := analyzer.AnnouncementSymbol(newsTitle)
+	go worker.trackPriceGrowth(announcedType, symbolAssets)
+
 	switch announcedType {
 	case announcement.Unknown:
 		log.Warning.Print("This new announcement is unuseful for Bascrap")
