@@ -7,6 +7,7 @@ import (
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
 	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -17,7 +18,7 @@ func (worker *Worker) trackPriceGrowth(announcedAssets symbol.Assets, annType an
 	case announcement.Unknown:
 		return
 	case announcement.NewCrypto:
-		log.Info.Println("Price growth tracker applied to pair ", announcedAssets)
+		log.Info.Println("[PriceTracker] -> Price growth tracker applied to pair ", announcedAssets)
 		priceList = priceGetter(worker.gateioConn, announcedAssets)
 	case announcement.NewTradingPair:
 		operatePair := worker.selectBuyPair(announcedAssets)
@@ -51,13 +52,13 @@ func priceGetter(exchange exchangeapi.ApiConnector, assets symbol.Assets) []stri
 		responseTime := time.Now()
 
 		requestDur := responseTime.Sub(requestTime) / 2
-		priceList = append(priceList, fmt.Sprintf("[%s] %s/%s -> %s. Request time: %d ms\n",
+		priceList = append(priceList, fmt.Sprintf("[%s] %s/%s -> %s Request time: %d ms\n",
 			time.Now().Add((-requestDur)*time.Nanosecond).Format(time.StampMicro),
 			assets.Base, assets.Quote,
 			strconv.FormatFloat(price, 'f', -1, 64),
-			requestDur*time.Millisecond))
+			requestDur/time.Millisecond))
 
-		time.Sleep(5 * time.Millisecond)
+		time.Sleep(time.Millisecond)
 	}
 
 	priceList = append(priceList, "Finished after one minute.")
@@ -65,10 +66,16 @@ func priceGetter(exchange exchangeapi.ApiConnector, assets symbol.Assets) []stri
 }
 
 func storePriceList(priceList []string, assets symbol.Assets) string {
-	fileName := fmt.Sprintf("./price_tracker/%s%s_%s",
-		assets.Base, assets.Quote, time.Now().Format(time.StampMilli))
+	filePath := filepath.Join(".", "price_tracker")
+	err := os.MkdirAll(filePath, os.ModePerm)
+	if err != nil {
+		log.Error.Print("[PriceTracker] -> ", err)
+		return ""
+	}
 
-	file, err := os.Create(fileName)
+	filePath = filepath.Join(filePath, fmt.Sprintf("%s%s_%d.txt",
+		assets.Base, assets.Quote, time.Now().UnixMilli()))
+	file, err := os.Create(filePath)
 	if err != nil {
 		log.Error.Print("[PriceTracker] -> ", err)
 		return ""
@@ -89,5 +96,5 @@ func storePriceList(priceList []string, assets symbol.Assets) string {
 		return ""
 	}
 
-	return fileName
+	return filePath
 }
