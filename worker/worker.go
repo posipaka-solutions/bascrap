@@ -103,7 +103,6 @@ func (worker *Worker) monitorController() {
 
 func (worker *Worker) processAnnouncement(newsTitle string) {
 	symbolAssets, announcedType := analyzer.AnnouncementSymbol(newsTitle)
-	go worker.trackPriceGrowth(symbolAssets, announcedType)
 
 	switch announcedType {
 	case announcement.Unknown:
