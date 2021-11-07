@@ -2,6 +2,7 @@ package worker
 
 import (
 	"fmt"
+	"github.com/pebbe/zmq4"
 	"github.com/posipaka-trade/bascrap/internal/announcement"
 	"github.com/posipaka-trade/bascrap/internal/announcement/analyzer"
 	"github.com/posipaka-trade/bascrap/internal/scraper"
@@ -14,6 +15,8 @@ import (
 	"time"
 )
 
+const cryptoAlarmPort = 6969
+
 type Worker struct {
 	gateioConn, binanceConn exchangeapi.ApiConnector
 	tdClient                *client.Client
@@ -21,6 +24,9 @@ type Worker struct {
 	initialFunds             float64
 	notificationsQueue       []string
 	sendTelegramNotification bool
+
+	zctx        *zmq4.Context
+	alarmSocket *zmq4.Socket
 
 	messageMutex        sync.Mutex
 	latestHandleMessage string
@@ -49,13 +55,18 @@ func (worker *Worker) StartMonitoring() {
 
 	limits, err := worker.binanceConn.GetSymbolsLimits()
 	if err != nil {
-		log.Info.Print("Failed to get symbols limits from Binance")
+		log.Error.Fatal("Failed to get symbols limits from Binance. ", err)
 	}
 	worker.binanceConn.StoreSymbolsLimits(limits)
 
 	worker.tdClient = telegram.NewTDLibClient()
 	if worker.tdClient == nil {
-		return
+		log.Error.Fatal("Failed to create telegram lib client.")
+	}
+
+	err = worker.bindAlarmSocket()
+	if err != nil {
+		log.Error.Fatal("Failed to bind CryptoAlarm socket. ", err)
 	}
 
 	handler := scraper.New(worker.tdClient)
@@ -109,6 +120,7 @@ func (worker *Worker) processAnnouncement(newsTitle string) {
 			//	return
 			//}
 			worker.ProcessCryptoAnnouncement(symbolAssets)
+			worker.causeCryptoAlarm()
 		}
 		break
 	case announcement.NewTradingPair:
@@ -117,6 +129,7 @@ func (worker *Worker) processAnnouncement(newsTitle string) {
 				newsTitle)
 		} else {
 			worker.ProcessTradingPairAnnouncement(symbolAssets)
+			worker.causeCryptoAlarm()
 		}
 		break
 	}
@@ -167,4 +180,33 @@ func (worker *Worker) sendTelegramNotifications() {
 		time.Sleep(1 * time.Second)
 	}
 	worker.notificationsQueue = worker.notificationsQueue[:0]
+}
+
+func (worker *Worker) bindAlarmSocket() error {
+	var err error
+	worker.zctx, err = zmq4.NewContext()
+	if err != nil {
+		return err
+	}
+
+	worker.alarmSocket, err = worker.zctx.NewSocket(zmq4.PUB)
+	if err != nil {
+		return err
+	}
+
+	err = worker.alarmSocket.Bind(fmt.Sprint("tcp://*:", cryptoAlarmPort))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (worker *Worker) causeCryptoAlarm() {
+	_, err := worker.alarmSocket.Send("ala-a-arm", 0)
+	if err != nil {
+		log.Warning.Print("Crypto alarm sending failed. ", err)
+		return
+	}
+	log.Info.Print("Crypto alarm sent out.")
 }
