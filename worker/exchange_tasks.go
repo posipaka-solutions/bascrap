@@ -35,7 +35,7 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) (or
 		Assets:   newSymbol,
 		Side:     order.Buy,
 		Type:     order.Limit,
-		Quantity: worker.initialFunds / price,
+		Quantity: worker.funds.CryptoFunds / price,
 		Price:    price * 1.50,
 	}
 	var orderInfo order.OrderInfo
@@ -62,14 +62,14 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameter
 		if newQuoteQuantity == 0 {
 			return hagglingParameters{}
 		}
-		worker.initialFunds = newQuoteQuantity
+		worker.funds.TradingPairFunds = newQuoteQuantity
 	}
 
 	params := order.Parameters{
 		Assets:   buyPair,
 		Side:     order.Buy,
 		Type:     order.Market,
-		Quantity: worker.initialFunds,
+		Quantity: worker.funds.TradingPairFunds,
 	}
 
 	log.Info.Printf("Pair %s/%s selected for trading.", buyPair.Base, buyPair.Quote)
@@ -96,7 +96,7 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 		},
 		Side:     order.Buy,
 		Type:     order.Market,
-		Quantity: worker.initialFunds,
+		Quantity: worker.funds.TradingPairFunds,
 	}
 
 	if buyPair.Quote == assets.Usdt {

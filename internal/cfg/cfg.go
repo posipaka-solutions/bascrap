@@ -39,17 +39,30 @@ func ApiCredentials(cfgPath, exchange string) (exchangeapi.ApiKey, error) {
 	}, nil
 }
 
+type Funds struct {
+	CryptoFunds      float64
+	TradingPairFunds float64
+}
+
 // InitialFunds return a value of initial funds specified in configuration file
-func InitialFunds(cfgPath string) (float64, error) {
+func InitialFunds(cfgPath string) (Funds, error) {
 	tml, err := toml.LoadFile(cfgPath)
 	if err != nil {
-		return 0, errors.New("[cfg] Config file (" + cfgPath + ") loading error " + err.Error())
+		return Funds{}, errors.New("[cfg] Config file (" + cfgPath + ") loading error " + err.Error())
 	}
 
-	initialFunds := tml.Get("initial_funds")
-	if initialFunds == nil {
-		return 0, errors.New("[cfg] Initial funds(`initial_funds`) not specified")
+	cryptoFunds := tml.Get("crypto_funds")
+	if cryptoFunds == nil {
+		return Funds{}, errors.New("[cfg] Initial funds(`crypto_funds`) not specified")
 	}
 
-	return initialFunds.(float64), nil
+	tradingPairFunds := tml.Get("trading_pair_funds")
+	if tradingPairFunds == nil {
+		return Funds{}, errors.New("[cfg] Initial funds(`trading_pair_funds`) not specified")
+	}
+
+	return Funds{
+		CryptoFunds:      cryptoFunds.(float64),
+		TradingPairFunds: tradingPairFunds.(float64),
+	}, nil
 }
