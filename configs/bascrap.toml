@@ -1,4 +1,5 @@
-initial_funds = 12.0 # in busd
+crypto_funds      = 450.0 # in busd
+trading_pair_funds = 200.0
 
 [binance_api_cred]
 key = ""

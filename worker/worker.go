@@ -21,7 +21,8 @@ type Worker struct {
 	gateioConn, binanceConn exchangeapi.ApiConnector
 	tdClient                *client.Client
 
-	initialFunds             float64
+	cryptoFunds              float64
+	tradingPairFunds         float64
 	notificationsQueue       []string
 	sendTelegramNotification bool
 
@@ -36,9 +37,10 @@ type Worker struct {
 	isWorking bool
 }
 
-func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds float64, sendTelegramNotification bool) *Worker {
+func New(binanceConn, gateioConn exchangeapi.ApiConnector, cryptoFunds, tradingPairFunds float64, sendTelegramNotification bool) *Worker {
 	worker := &Worker{
-		initialFunds:             funds,
+		cryptoFunds:              cryptoFunds,
+		tradingPairFunds:         tradingPairFunds,
 		gateioConn:               gateioConn,
 		binanceConn:              binanceConn,
 		notificationsQueue:       make([]string, 15),
