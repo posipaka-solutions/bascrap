@@ -60,9 +60,9 @@ func InitialFunds(cfgPath string) (Funds, error) {
 	if tradingPairFunds == nil {
 		return Funds{}, errors.New("[cfg] Initial funds(`trading_pair_funds`) not specified")
 	}
-	var funds Funds
-	funds.CryptoFunds = cryptoFunds.(float64)
-	funds.TradingPairFunds = tradingPairFunds.(float64)
 
-	return funds, nil
+	return Funds{
+		CryptoFunds:      cryptoFunds.(float64),
+		TradingPairFunds: tradingPairFunds.(float64),
+	}, nil
 }

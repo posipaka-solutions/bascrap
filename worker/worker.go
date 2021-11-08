@@ -5,6 +5,7 @@ import (
 	"github.com/pebbe/zmq4"
 	"github.com/posipaka-trade/bascrap/internal/announcement"
 	"github.com/posipaka-trade/bascrap/internal/announcement/analyzer"
+	"github.com/posipaka-trade/bascrap/internal/cfg"
 	"github.com/posipaka-trade/bascrap/internal/scraper"
 	"github.com/posipaka-trade/bascrap/internal/telegram"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
@@ -21,8 +22,7 @@ type Worker struct {
 	gateioConn, binanceConn exchangeapi.ApiConnector
 	tdClient                *client.Client
 
-	cryptoFunds              float64
-	tradingPairFunds         float64
+	funds                    cfg.Funds
 	notificationsQueue       []string
 	sendTelegramNotification bool
 
@@ -37,10 +37,9 @@ type Worker struct {
 	isWorking bool
 }
 
-func New(binanceConn, gateioConn exchangeapi.ApiConnector, cryptoFunds, tradingPairFunds float64, sendTelegramNotification bool) *Worker {
+func New(binanceConn, gateioConn exchangeapi.ApiConnector, funds cfg.Funds, sendTelegramNotification bool) *Worker {
 	worker := &Worker{
-		cryptoFunds:              cryptoFunds,
-		tradingPairFunds:         tradingPairFunds,
+		funds:                    funds,
 		gateioConn:               gateioConn,
 		binanceConn:              binanceConn,
 		notificationsQueue:       make([]string, 15),
