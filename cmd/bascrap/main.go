@@ -43,7 +43,11 @@ func main() {
 		panic(err.Error())
 	}
 
-	w := worker.New(binance.New(binanceApiKey), gate.New(gateioApiKey), initialFunds, enableTelegramNotification)
+	bncMgr := binance.New(binanceApiKey)
+	defer bncMgr.Finish()
+	gateMgr := gate.New(gateioApiKey)
+	defer bncMgr.Finish()
+	w := worker.New(bncMgr, gateMgr, initialFunds, enableTelegramNotification)
 	w.StartMonitoring()
 	w.Wg.Wait()
 	log.Info.Print("Bascrap execution finished.")
