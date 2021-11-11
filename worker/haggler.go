@@ -11,8 +11,8 @@ import (
 
 const (
 	cryptoGrowthPercent   = 1.21
-	usdtPairGrowthPercent = 1.10
-	busdPairGrowthPercent = 1.05
+	usdtPairGrowthPercent = 1.2
+	busdPairGrowthPercent = 1.04
 )
 
 type hagglingParameters struct {
