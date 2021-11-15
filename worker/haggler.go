@@ -11,8 +11,8 @@ import (
 
 const (
 	cryptoGrowthPercent   = 1.21
-	usdtPairGrowthPercent = 1.2
-	busdPairGrowthPercent = 1.04
+	usdtPairGrowthPercent = 1.1
+	pairsGrowthPercent    = 1.04
 )
 
 type hagglingParameters struct {
@@ -47,7 +47,7 @@ func (worker *Worker) sellCrypto(parameters *hagglingParameters) {
 		if orderParameters.Assets.Quote == assets.Busd {
 			orderParameters.Price = parameters.boughtPrice * usdtPairGrowthPercent
 		} else {
-			orderParameters.Price = parameters.boughtPrice * busdPairGrowthPercent
+			orderParameters.Price = parameters.boughtPrice * pairsGrowthPercent
 		}
 
 		orderInfo, err = worker.binanceConn.SetOrder(orderParameters)
