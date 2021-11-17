@@ -9,8 +9,9 @@ github.com/posipaka-trade/binance-api-go v0.0.0-20211108233733-328f3b2a63cb/go.m
 github.com/posipaka-trade/gate-api-go v0.0.0-20211109000102-e9f399ce4d1b h1:u5i81wfkO2Fil3Q7LrsU4JCAlgR4HS/FE5MsPPDhkVo=
 github.com/posipaka-trade/gate-api-go v0.0.0-20211109000102-e9f399ce4d1b/go.mod h1:FOGkWYXACveHUos725hGvsweo1kPBnO0VjE05xXyyNQ=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20211024134539-c63e65debb04/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
-github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20211024141904-3a308c1dbf3a h1:tywLs4Fx70KEIU1KQsp6DDXvATZG8X3qStl1LBdHLiA=
 github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20211024141904-3a308c1dbf3a/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
+github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20211116225215-f0304a42a38e h1:80k9VndNQsELWcsUrO+CbE7qyI1qq3GqYRN+LVZso7c=
+github.com/posipaka-trade/posipaka-trade-cmn v0.0.0-20211116225215-f0304a42a38e/go.mod h1:0GcgO7G+PXQ6PfTX4VVa6KGm9fWp0d1eLrZp7rz8SHY=
 github.com/yuin/goldmark v1.3.5/go.mod h1:mwnBkeHKe2W/ZEtQ+71ViKU8L12m81fl3OWwC1Zlc8k=
 github.com/zelenin/go-tdlib v0.4.1 h1:qR50lonl+2tFJ/NWHtEhnFS0PLQwJUeXuUVPVqfKzBw=
 github.com/zelenin/go-tdlib v0.4.1/go.mod h1:Xs8fXbk5n7VaPyrSs9DP7QYoBScWYsjX+lUcWmx1DIU=
