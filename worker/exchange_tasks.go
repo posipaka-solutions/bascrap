@@ -20,17 +20,20 @@ func (worker *Worker) buyNewCrypto(newSymbol symbol.Assets) (hagglingParameters,
 		boughtPrice:      price,
 		symbol:           newSymbol,
 	}
-	var orderInfo order.OrderInfo
-	orderInfo, err = worker.setCryptoOrder(newSymbol, price)
+
+	orderInfo, err := worker.setCryptoOrder(newSymbol, price)
 	if err != nil {
 		return hagglingParameters{}, err
 	}
+
+	hagglingParams.orderId = orderInfo.Id
 	hagglingParams.boughtPrice = orderInfo.Price
-	hagglingParams.boughtQuantity = orderInfo.Quantity
+	hagglingParams.boughtQuantity = orderInfo.BaseQuantity
+
 	return hagglingParams, nil
 }
 
-func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) (order.OrderInfo, error) {
+func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) (order.Info, error) {
 	parameters := order.Parameters{
 		Assets:   newSymbol,
 		Side:     order.Buy,
@@ -38,12 +41,11 @@ func (worker *Worker) setCryptoOrder(newSymbol symbol.Assets, price float64) (or
 		Quantity: worker.funds.CryptoFunds / price,
 		Price:    price * 1.50,
 	}
-	var orderInfo order.OrderInfo
-	var err error
-	orderInfo, err = worker.gateioConn.SetOrder(parameters)
+
+	orderInfo, err := worker.gateioConn.SetOrder(parameters)
 	log.Info.Printf("Limit order on gate.io:Quantity value - %f, Price value - %f", parameters.Quantity, parameters.Price)
 	if err != nil {
-		return order.OrderInfo{}, err
+		return order.Info{}, err
 	}
 
 	return orderInfo, nil
@@ -83,7 +85,7 @@ func (worker *Worker) buyNewFiat(newTradingPair symbol.Assets) hagglingParameter
 	return hagglingParameters{
 		announcementType: announcement.NewTradingPair,
 		boughtPrice:      orderInfo.Price,
-		boughtQuantity:   orderInfo.Quantity,
+		boughtQuantity:   orderInfo.BaseQuantity,
 		symbol:           buyPair,
 	}
 }
@@ -104,7 +106,7 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 		params.Assets.Base = assets.Busd
 		params.Assets.Quote = assets.Usdt
 	}
-	var orderInfo order.OrderInfo
+
 	orderInfo, err := worker.binanceConn.SetOrder(params)
 	if err != nil {
 		worker.notificationsQueue = append(worker.notificationsQueue, err.Error())
@@ -112,7 +114,7 @@ func (worker *Worker) transferFunds(buyPair symbol.Assets) float64 {
 		return 0
 	}
 
-	return orderInfo.Quantity * 0.995
+	return orderInfo.BaseQuantity * 0.995
 }
 
 func (worker *Worker) selectBuyPair(newTradingPair symbol.Assets) symbol.Assets {

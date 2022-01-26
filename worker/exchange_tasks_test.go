@@ -48,6 +48,7 @@ func TestNewFiatAnnouncementBuy(t *testing.T) {
 		exchange.EXPECT().GetCurrentPrice(gomock.Any()).Return(price, nil)
 
 		worker := New(exchange, nil, initialFunds, false)
+		// wer
 		haglgler = worker.buyNewFiat(newSymbol)
 
 		if haglgler.symbol.IsEmpty() {

@@ -9,6 +9,7 @@ import (
 	"github.com/posipaka-trade/bascrap/internal/scraper"
 	"github.com/posipaka-trade/bascrap/internal/telegram"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi"
+	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/order"
 	"github.com/posipaka-trade/posipaka-trade-cmn/exchangeapi/symbol"
 	"github.com/posipaka-trade/posipaka-trade-cmn/log"
 	"github.com/zelenin/go-tdlib/client"
@@ -149,7 +150,20 @@ func (worker *Worker) ProcessCryptoAnnouncement(symbolAssets symbol.Assets) {
 		worker.notificationsQueue = append(worker.notificationsQueue,
 			fmt.Sprintf("Bascrap bought new crypto %s at gate.io.\nBought quantity -> %f.\nPrice -> %f", symbolAssets.Base, hagglingParams.boughtQuantity, hagglingParams.boughtPrice))
 		log.Info.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
-		worker.sellCrypto(&hagglingParams)
+
+		for {
+			orderInfo, err := worker.gateioConn.GetOrderInfo(hagglingParams.orderId, hagglingParams.symbol)
+			if err != nil {
+				worker.notificationsQueue = append(worker.notificationsQueue, "Error in getting order information.\n"+err.Error())
+				log.Warning.Print(worker.notificationsQueue[len(worker.notificationsQueue)-1])
+			}
+
+			if orderInfo.Status == order.Filled {
+				worker.sellCrypto(&hagglingParams)
+			}
+			time.Sleep(1 * time.Second)
+		}
+
 	}
 }
 
